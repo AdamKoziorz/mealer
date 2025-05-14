@@ -1,11 +1,11 @@
 # Mealer
 
-> An restaurant recommender app for foodies who only trust their own taste
+> A restaurant recommender app for foodies who mainly trust their own taste
 
 ## (Planned) Features
 
-- Create a map of your favourite visited (or unvisited) restaurants
-- Query your map for restaurants which fulfill your needs
+- Create a list of your favourite visited (or unvisited) restaurants
+- Query your list for restaurants which fulfill your needs
 - Get daily recommendations based on stored personal preferences
 
 ## (Expected) Tech Stack
@@ -13,11 +13,11 @@
 - **Frontend**: React, TypeScript, Tailwind, Vite  
 - **Backend**: Express, PostgreSQL, Prisma 
 - **Authentication**: Passport.js
-- **Testing**: Playwright  
+- **Testing**: Playwright
 
 ## Contributing
 
-This is currently a solo project, but contributions will be welcomed once an MVP has been released.
+This is a solo project at the moment, but please feel free to make a Discussion post if you want to give some input!
 
 ## License
 
