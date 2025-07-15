@@ -1,14 +1,17 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
-import tanstackRouter from '@tanstack/router-plugin/vite'
+import tanstackRouterVite from '@tanstack/router-plugin/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
-    tanstackRouter({
+    tanstackRouterVite({
       target: 'react',
-      autoCodeSplitting: true
+      autoCodeSplitting: true,
+      routesDirectory: './src/pages',
+      generatedRouteTree: './app/router/routes.gen.ts',
+      routeFilePrefix: '/'
     }),
     react(),
     tailwindcss()

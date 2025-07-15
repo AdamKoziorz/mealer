@@ -1,4 +1,4 @@
-import { MapView } from "../components/layout/MapView";
+import { MapView } from '@features/map/components/layout/MapView'
 
 // Please note that the "Map" feature is going to be refactored so that
 // it only contains logic related to the map itself (including markers),
