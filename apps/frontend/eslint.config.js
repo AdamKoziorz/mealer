@@ -1,4 +1,3 @@
-import js from '@eslint/js'
 import globals from 'globals'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
@@ -11,7 +10,7 @@ export default tseslint.config(
     settings: {
       'import/resolver': {
         typescript: {
-          project: './tsconfig.json'
+          project: './tsconfig.app.json'
         }
       }
     },
@@ -37,11 +36,11 @@ export default tseslint.config(
       'import/no-restricted-paths': [
         'error', {
           zones: [
-            { target: '@shared', from: ['@entities', '@features', '@widgets', '@pages', '@app']},
-            { target: '@entities', from: ['@features', '@widgets', '@pages', '@app']},
-            { target: '@features', from: ['@widgets', '@pages', '@app']},
-            { target: '@widgets', from: ['@pages', '@app']},
-            { target: '@pages', from: ['@app']}
+            { target: 'src/shared', from: ['src/entities', 'src/features', 'src/widgets', 'src/pages', 'src/app']},
+            { target: 'src/entities', from: ['src/features', 'src/widgets', 'src/pages', 'src/app']},
+            { target: 'src/features', from: ['src/widgets', 'src/pages', 'src/app']},
+            { target: 'src/widgets', from: ['src/pages', 'src/app']},
+            { target: 'src/pages', from: ['src/app']},
           ]
         }
       ]
