@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
-export const MapView = () => {
+export const Map = () => {
     
     const mapContainer = useRef<HTMLDivElement | null>(null);
     const map = useRef<maplibregl.Map | null>(null);
