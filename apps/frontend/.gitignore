@@ -26,3 +26,6 @@ dist-ssr
 # Other directories and files
 .tanstack/**
 /src/app/routeTree.gen.ts
+
+# Development Files
+db.json
