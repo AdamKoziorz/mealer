@@ -23,5 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 
-# Other files
+# Other directories and files
+.tanstack/**
 /src/app/routeTree.gen.ts
