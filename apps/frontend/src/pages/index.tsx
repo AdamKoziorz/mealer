@@ -1,7 +1,7 @@
 import { getUserRestaurants } from '@entities';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
-import { Map } from '@widgets';
+import { RestaurantMap } from '@widgets';
 
 // Please note that the "Map" feature is going to be refactored so that
 // it only contains logic related to the map itself (including markers),
@@ -21,11 +21,11 @@ const HomePage = () => {
                 <h1 className="text-4xl">List of Restaurants</h1>
                 {isPending ? <span className="text-2xl">Loading...</span> :
                  isError ? <span className="text-2xl">Error!</span> :
-                 data.map((restaurant: any) => <li className="text-2xl">{restaurant.name}</li>)
+                 data.map((restaurant: any) => <li key={restaurant.id} className="text-2xl">{restaurant.name}</li>)
                 }
             </div>
             <div className="flex-auto relative h-screen">
-                <Map />
+                <RestaurantMap />
             </div>
         </div>
     );
