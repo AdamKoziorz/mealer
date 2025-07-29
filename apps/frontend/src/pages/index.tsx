@@ -1,4 +1,4 @@
-import { getUserRestaurants } from '@entities';
+import { UserRestaurantAPI } from '@entities';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { RestaurantMap } from '@widgets';
@@ -13,7 +13,7 @@ import { RestaurantMap } from '@widgets';
 
 const HomePage = () => {
 
-    const { isPending, isError, data } = useQuery({ queryKey: ['userRestaurants'], queryFn: getUserRestaurants})
+    const { isPending, isError, data } = useQuery({ queryKey: ['userRestaurants'], queryFn: UserRestaurantAPI.get})
     
     return (
         <div className="flex h-full">
