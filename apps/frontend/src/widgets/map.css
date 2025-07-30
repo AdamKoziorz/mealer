@@ -1,0 +1,23 @@
+.add-restaurant-popup .maplibregl-popup-close-button {
+    background-color: #da3838 !important;
+    color: white !important;
+    border-radius: 1.5rem !important;
+    width: 2.4rem !important;
+    height: 2.4rem !important;
+    font-size: 1.5rem !important;
+    border: none !important;
+    transition: all 0.2s ease !important;
+    top: 1rem !important;  
+    right: 1rem !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+}
+
+.add-restaurant-popup .maplibregl-popup-content {
+    width: 20rem !important;
+    padding: 1.6rem !important;
+    border-radius: 1.2rem !important;
+}
