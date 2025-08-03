@@ -1,11 +1,11 @@
 import "./map.css";
 
 import { useEffect, useRef, useState } from "react";
-import maplibregl from "maplibre-gl";
+import maplibregl, { Popup } from "maplibre-gl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { UUID } from "crypto";
 import { createPortal } from "react-dom";
-import { UserRestaurantAPI, type UserRestaurants } from "@entities";
+import { UserRestaurantAPI, type UserRestaurant } from "@entities/restaurant";
 
 import { Input } from "@shared/ui";
 import { Button } from "@shared/ui";
@@ -23,6 +23,7 @@ import z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
+
 const AddRestaurantPopupFormSchema = z.object({
   restaurantName: z.string().min(1, {
     message: "Please input a non-empty name!",
@@ -32,6 +33,11 @@ const AddRestaurantPopupFormSchema = z.object({
 interface AddRestaurantPopUpProps {
   onClose: () => void;
   lnglat: maplibregl.LngLat;
+}
+
+interface RestaurantDetailPopUpProps {
+  onClose: () => void;
+  restaurant: UserRestaurant;
 }
 
 // This popup provides a form to the user that allows them to add restaurants
@@ -70,7 +76,7 @@ const AddRestaurantPopUp = ({ onClose, lnglat }: AddRestaurantPopUpProps) => {
       price_range: 2, // Placeholder
       tags: [], // Placeholder
       notable_items: [], // Placeholder
-    } as unknown as UserRestaurants);
+    } as unknown as UserRestaurant[]);
   }
 
   return (
@@ -88,7 +94,7 @@ const AddRestaurantPopUp = ({ onClose, lnglat }: AddRestaurantPopUpProps) => {
               <FormItem>
                 <FormLabel>Restaurant Name</FormLabel>
                 <FormControl>
-                  <Input placeholder="Yummies" {...field}></Input>
+                  <Input placeholder="Yummies" {...field}/>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -102,6 +108,35 @@ const AddRestaurantPopUp = ({ onClose, lnglat }: AddRestaurantPopUpProps) => {
     </div>
   );
 };
+
+
+
+
+
+
+
+
+
+
+// This popup shows more information about the restaurant that was
+// clicked, and (currently) provides an option for users to delete it
+// from the map
+export const RestaurantLabelPopUp = ({restaurant}: RestaurantDetailPopUpProps) => {
+  return (
+   <div className="text-black p-16 flex flex-col gap-6">
+      <h1 className="text-xl font-semibold">{restaurant.name}</h1>
+    </div>
+  )
+}
+
+
+
+
+
+
+
+
+
 
 // This widget allows users to view their restaurants on a map
 export const RestaurantMap = () => {
@@ -149,7 +184,7 @@ export const RestaurantMap = () => {
 
       const popup = new maplibregl.Popup({
         maxWidth: "none",
-        className: "add-restaurant-popup",
+        className: "popup",
       })
         .setLngLat(e.lngLat)
         .setDOMContent(popupNode)
@@ -205,7 +240,8 @@ export const RestaurantMap = () => {
       } else {
         const marker = new maplibregl.Marker()
           .setLngLat([restaurant.longitude, restaurant.latitude])
-          .addTo(map.current!);
+          .addTo(map.current!)
+
         currentMarkers.set(restaurant.id, marker);
       }
     });
@@ -223,8 +259,7 @@ export const RestaurantMap = () => {
   // component even though maplibre gl dynamically adds elements
   // directly to the DOM
   return (
-    <section
-      aria-label="Restaurant Map"
+    <div
       ref={mapContainer}
       className="w-full h-full"
     >
@@ -239,6 +274,6 @@ export const RestaurantMap = () => {
           />,
           popupState.element,
         )}
-    </section>
+    </div>
   );
 };

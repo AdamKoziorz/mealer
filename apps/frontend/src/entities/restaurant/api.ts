@@ -4,7 +4,7 @@
 import type { UUID } from "crypto";
 import type { LngLat } from "maplibre-gl";
 
-export type UserRestaurants = {
+export type UserRestaurant = {
     "id": UUID,
     "name": string,
     "address": string,
@@ -14,7 +14,7 @@ export type UserRestaurants = {
     "price_range": number,
     "tags": string[],
     "notable_items": string[]
-}[]
+}
 
 // Also for now, we are going to hardcode a localhost variable
 // pointing to the db "server". We will implement a proper
@@ -32,7 +32,7 @@ export const UserRestaurantAPI = {
                 throw new Error("Failed to fetch")
             }
             const json = await response.json();
-            return json as UserRestaurants;
+            return json as UserRestaurant[];
         } catch (error) {
             if (error instanceof Error) console.error(error)
         }
@@ -40,7 +40,7 @@ export const UserRestaurantAPI = {
         return [];
     },
 
-    post: async (data: UserRestaurants) => {
+    post: async (data: UserRestaurant[]) => {
         try {
             const response = await fetch(`${SERVER_URL}/restaurants`, {
                 method: 'POST',
