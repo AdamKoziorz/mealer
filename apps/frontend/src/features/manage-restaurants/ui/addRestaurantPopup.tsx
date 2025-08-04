@@ -59,8 +59,8 @@ export const AddRestaurantPopUp = () => {
       address: "",                      
       longitude: RestaurantManagerStore.clickLocation!.lng,    // I know this is not null - assert
       latitude: RestaurantManagerStore.clickLocation!.lat,     // I know this is not null - assert
-      rating: 5,                        
-      price_range: 1,                 
+      rating: 0,                        
+      price_range: 0,                 
       tags: [],                       
       notable_items: [],                
     }

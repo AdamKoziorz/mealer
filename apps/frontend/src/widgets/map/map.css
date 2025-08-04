@@ -7,7 +7,7 @@
     font-size: 1.5rem !important;
     border: none !important;
     transition: all 0.2s ease !important;
-    top: 1rem !important;  
+    top: 0.9rem !important;  
     right: 1rem !important;
 
     display: flex !important;
@@ -18,7 +18,7 @@
 
 .popup .maplibregl-popup-content {
     width: 20rem !important;
-    padding: 1.6rem !important;
+    padding: 1.2rem !important;
     border-radius: 1.2rem !important;
 }
 

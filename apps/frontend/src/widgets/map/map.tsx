@@ -147,9 +147,11 @@ export const RestaurantMap = () => {
             })
           });
           
+          const zoomLevel = Math.max(16, map.current!.getZoom());
+
           map.current?.flyTo({
             center: lngLat,
-            zoom: 14,
+            zoom: zoomLevel,
             essential: true
           })
         })

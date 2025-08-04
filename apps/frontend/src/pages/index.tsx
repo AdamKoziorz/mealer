@@ -5,7 +5,7 @@ import { RestaurantDashboard } from '@widgets/dashboard';
 const HomePage = () => {
     return (
         <main className="flex h-full">
-            <section aria-label="Restaurant Dashboard" className="flex w-150 max-w-[35vw] flex-col text-black">
+            <section aria-label="Restaurant Dashboard" className="flex w-150 max-w-[30vw] flex-col text-black">
                 <RestaurantDashboard />
             </section>
             <section aria-label="Restaurant Map" className="flex-auto relative h-screen">

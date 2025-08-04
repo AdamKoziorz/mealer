@@ -11,7 +11,8 @@ seems to be overkill for this and I would prefer to use something simple
 and go more complex if needed.
 */
 
-import type { UserRestaurant } from "@entities/restaurant"
+import { UserRestaurantAPI, type UserRestaurant } from "@entities/restaurant"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { create } from 'zustand';
 import { redux } from 'zustand/middleware'
 
@@ -52,9 +53,13 @@ const RestaurantManagerStoreReducer = (
     state: RestaurantManagerStoreState,
     action: RestaurantManagerStoreAction
 ) => {
+
     // If we need more granular control over whether we remove
     // popups in the future, then we can place this in the
-    // switch block
+    // switch block.
+    //
+    // TODO: Remove side effect logic elsewhere so that we can
+    // keep this reducer pure
     state.activeMapPopup?.instance.remove();
 
     switch (action.type) {
@@ -101,6 +106,70 @@ const RestaurantManagerStoreInitialState: RestaurantManagerStoreState = {
     context: 'rm/set-idle'
 }
 
+
+// The actual main Zustand store itself
 export const useRestaurantManagerStore = create<RestaurantManagerStore>()(
     redux(RestaurantManagerStoreReducer, RestaurantManagerStoreInitialState)
 )
+
+// A custom hook to query the currently selected Restaurant
+export const useSelectedRestaurantQuery = () => {
+    const selectedRestaurantID = 
+        useRestaurantManagerStore(state => state.selectedRestaurant)
+
+    const {
+        data,
+        isPending,
+        isError,
+        error
+    } = useQuery({
+        queryKey: ["userRestaurants"],
+        queryFn: UserRestaurantAPI.get
+    })
+
+    const restaurant = data?.find(
+        (restaurant) => restaurant.id === selectedRestaurantID
+    ) ?? null;
+
+    return {
+        isPending,
+        isError,
+        error,
+        selectedRestaurant: restaurant
+    }
+}
+
+// A custom hook to delete the currently selected Restaurant
+export const deleteSelectedRestaurant = () => {
+    const queryClient = useQueryClient();
+    const RestaurantManagerStore = useRestaurantManagerStore()
+
+    const createMutation = useMutation({
+        mutationFn: UserRestaurantAPI.delete,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["userRestaurants"] });
+            RestaurantManagerStore.dispatch({
+                type: 'rm/set-idle'
+            })
+
+        },
+    });
+
+    return createMutation;
+}
+
+
+// A custom hook to alter the currently selected Restauran
+export const updateSelectedRestaurant = () => {
+    const queryClient = useQueryClient();
+
+    const createMutation = useMutation({
+        mutationFn: UserRestaurantAPI.put,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["userRestaurants"] });
+        },
+    });
+
+    return createMutation;
+}
+

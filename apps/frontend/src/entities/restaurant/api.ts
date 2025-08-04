@@ -55,5 +55,37 @@ export const UserRestaurantAPI = {
         }
 
         return [];
+    },
+
+    put: async (data: UserRestaurant) => {
+        try {
+            const response = await fetch(`${SERVER_URL}/restaurants/${data.id}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            })
+            if (!response.ok) {
+                throw new Error("Failed to Update Restaurant")
+            }
+        } catch (error) {
+            if (error instanceof Error) console.error(error)
+        }
+
+        return [];
+    },
+
+    delete: async (data: UserRestaurant) => {
+        try {
+            const response = await fetch(`${SERVER_URL}/restaurants/${data.id}`, {
+                method: 'DELETE',
+            })
+            if (!response.ok) {
+                throw new Error("Failed to Delete Restaurant")
+            }
+        } catch (error) {
+            if (error instanceof Error) console.error(error)
+        }
+
+        return [];
     }
 }
