@@ -40,7 +40,7 @@ export const UserRestaurantAPI = {
         return [];
     },
 
-    post: async (data: UserRestaurant[]) => {
+    post: async (data: UserRestaurant) => {
         try {
             const response = await fetch(`${SERVER_URL}/restaurants`, {
                 method: 'POST',

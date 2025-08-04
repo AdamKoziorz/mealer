@@ -29,12 +29,7 @@ const AddRestaurantPopupFormSchema = z.object({
 export const AddRestaurantPopUp = () => {
   const queryClient = useQueryClient();
   
-  const {
-    clickLocation,
-    setContext,
-    setClickLocation,
-    setPopup 
-  } = useRestaurantManagerStore();
+  const RestaurantManagerStore = useRestaurantManagerStore();
 
   // Eventually, we are also going to have to do some state handling
   // (We do not have any Pending/Error state handling yet)
@@ -42,9 +37,9 @@ export const AddRestaurantPopUp = () => {
     mutationFn: UserRestaurantAPI.post,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["userRestaurants"] });
-      setContext('idle');
-      setClickLocation(null);
-      setPopup(null);
+      RestaurantManagerStore.dispatch({
+        type: 'rm/set-idle'
+      })
     },
   });
 
@@ -58,17 +53,19 @@ export const AddRestaurantPopUp = () => {
   });
 
   function onSubmit(data: z.infer<typeof AddRestaurantPopupFormSchema>) {
-    createMutation.mutate({
-      id: crypto.randomUUID(), // TODO: Should be on backend
+    const newRestaurant: UserRestaurant = {
+      id: crypto.randomUUID(),          // TODO: Should be on backend
       name: data.restaurantName,
-      address: "Placeholder", // Placeholder
-      longitude: clickLocation?.lng,
-      latitude: clickLocation?.lat,
-      rating: 5, // Placeholder
-      price_range: 2, // Placeholder
-      tags: [], // Placeholder
-      notable_items: [], // Placeholder
-    } as unknown as UserRestaurant[]);
+      address: "",                      
+      longitude: RestaurantManagerStore.clickLocation!.lng,    // I know this is not null - assert
+      latitude: RestaurantManagerStore.clickLocation!.lat,     // I know this is not null - assert
+      rating: 5,                        
+      price_range: 1,                 
+      tags: [],                       
+      notable_items: [],                
+    }
+
+    createMutation.mutate(newRestaurant);
   }
 
   return (

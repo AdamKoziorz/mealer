@@ -13,58 +13,94 @@ and go more complex if needed.
 
 import type { UserRestaurant } from "@entities/restaurant"
 import { create } from 'zustand';
+import { redux } from 'zustand/middleware'
 
-// Helper type
 type MapPopup = {
     element: HTMLDivElement;
     instance: maplibregl.Popup;
 }
 
-// Our contexts
-type ManageRestaurantContext = 
-    | 'idle'
-    | 'viewing-restaurant'
-    | 'adding-restaurant'
-    | 'editing-restaurant'
-    | 'confirming-restaurant-deletion'
+type RestaurantManagerStoreContext = 
+    | 'rm/set-idle'
+    | 'rm/select-restaurant'
+    | 'rm/click-empty-to-add'
 
-// Our store interface
-interface RestaurantManagerStore {
-
-    // Our state, which contain our context, popups, and
-    // other information
-    context: ManageRestaurantContext
-    selectedRestaurant: UserRestaurant["id"] | null;
+type RestaurantManagerStoreState = {
+    selectedRestaurant: UserRestaurant['id'] | null;
     clickLocation: maplibregl.LngLat | null;
     activeMapPopup: MapPopup | null;
-
-    // Core actions that our store provides, which
-    // are to be implemented by the actual Zustand store
-    setContext: (next: ManageRestaurantContext) => void;
-    selectRestaurant: (restaurantID: UserRestaurant["id"] | null) => void;
-    setClickLocation: (location: maplibregl.LngLat | null) => void;
-    setPopup: (popup: MapPopup | null) => void;
+    context: RestaurantManagerStoreContext;
 }
 
-// Our actual Zustand store
-export const useRestaurantManagerStore = create<RestaurantManagerStore>((set) => ({
-    context: 'idle',
-    selectedRestaurant: null,
-    clickLocation: null,
-    activeMapPopup: null,
+type RestaurantManagerStoreAction =
+    | { type: 'rm/set-idle' }
+    | { type: 'rm/select-restaurant'; 
+        selectedRestaurant: UserRestaurant['id'];
+        clickLocation: maplibregl.LngLat;
+        activeMapPopup: MapPopup }
+    | { type: 'rm/click-empty-to-add';
+        clickLocation : maplibregl.LngLat;
+        activeMapPopup: MapPopup }
 
-    setContext: (next) => {
-        set({ context: next })
-    },
-    selectRestaurant: (restaurantID) => set({ selectedRestaurant: restaurantID }),
-    setClickLocation: (loc) => set({ clickLocation: loc }),
-    setPopup: (popup) => {
-        set((state) => {
-            if (state.activeMapPopup?.instance) {
-                state.activeMapPopup.instance.remove()
+type RestaurantManagerStore = RestaurantManagerStoreState & {
+    dispatch: 
+        (action: RestaurantManagerStoreAction)
+            => RestaurantManagerStoreAction
+}
+
+const RestaurantManagerStoreReducer = (
+    state: RestaurantManagerStoreState,
+    action: RestaurantManagerStoreAction
+) => {
+    // If we need more granular control over whether we remove
+    // popups in the future, then we can place this in the
+    // switch block
+    state.activeMapPopup?.instance.remove();
+
+    switch (action.type) {
+        case 'rm/set-idle': {
+            return {
+                ... state,
+                selectedRestaurant: null,
+                clickLocation : null,
+                activeMapPopup: null,
+                context: action.type
             }
-            
-            return { activeMapPopup: popup }
-        })
+        };
+
+        case 'rm/select-restaurant': {
+            return {
+                ... state,
+                selectedRestaurant: action.selectedRestaurant,
+                clickLocation: action.clickLocation,
+                activeMapPopup: action.activeMapPopup,
+                context: action.type
+            }
+        };
+
+        case 'rm/click-empty-to-add': {
+            return { 
+                ... state,
+                selectedRestaurant: null,
+                clickLocation: action.clickLocation,
+                activeMapPopup: action.activeMapPopup,
+                context: action.type
+            }
+        }
+
+        default: {
+            return state;
+        }
     }
-}))
+}
+
+const RestaurantManagerStoreInitialState: RestaurantManagerStoreState = {
+    selectedRestaurant: null,
+    clickLocation : null,
+    activeMapPopup: null,
+    context: 'rm/set-idle'
+}
+
+export const useRestaurantManagerStore = create<RestaurantManagerStore>()(
+    redux(RestaurantManagerStoreReducer, RestaurantManagerStoreInitialState)
+)

@@ -25,3 +25,7 @@
 .popup .maplibregl-popup-tip {
   border-width: 2rem;
 }
+
+.popup .maplibregl-popup-tip.no-tip {
+  border-width: 0rem;
+}
