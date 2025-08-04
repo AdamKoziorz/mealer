@@ -1,140 +1,14 @@
 import "./map.css";
 
-import { useEffect, useRef, useState } from "react";
-import maplibregl, { Popup } from "maplibre-gl";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useRef } from "react";
+import maplibregl from "maplibre-gl";
 import type { UUID } from "crypto";
 import { createPortal } from "react-dom";
-import { UserRestaurantAPI, type UserRestaurant } from "@entities/restaurant";
-
-import { Input } from "@shared/ui";
-import { Button } from "@shared/ui";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@shared/ui";
-
-// This app uses zod + react hook forms for client side input validation
-import z from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-
-
-const AddRestaurantPopupFormSchema = z.object({
-  restaurantName: z.string().min(1, {
-    message: "Please input a non-empty name!",
-  }),
-});
-
-interface AddRestaurantPopUpProps {
-  onClose: () => void;
-  lnglat: maplibregl.LngLat;
-}
-
-interface RestaurantDetailPopUpProps {
-  onClose: () => void;
-  restaurant: UserRestaurant;
-}
-
-// This popup provides a form to the user that allows them to add restaurants
-// onto the map. Requires the location of where the popup opened, and a
-// function that determines the closing behaviour of the popup if successful
-const AddRestaurantPopUp = ({ onClose, lnglat }: AddRestaurantPopUpProps) => {
-  const queryClient = useQueryClient();
-
-  // Eventually, we are also going to have to do some state handling
-  // (We do not have any Pending/Error state handling yet)
-  const createMutation = useMutation({
-    mutationFn: UserRestaurantAPI.post,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["userRestaurants"] });
-      onClose();
-    },
-  });
-
-  const addRestaurantPopUpForm = useForm<
-    z.infer<typeof AddRestaurantPopupFormSchema>
-  >({
-    resolver: zodResolver(AddRestaurantPopupFormSchema),
-    defaultValues: {
-      restaurantName: "",
-    },
-  });
-
-  function onSubmit(data: z.infer<typeof AddRestaurantPopupFormSchema>) {
-    createMutation.mutate({
-      id: crypto.randomUUID(), // TODO: Should be on backend
-      name: data.restaurantName,
-      address: "Placeholder", // Placeholder
-      longitude: lnglat.lng,
-      latitude: lnglat.lat,
-      rating: 5, // Placeholder
-      price_range: 2, // Placeholder
-      tags: [], // Placeholder
-      notable_items: [], // Placeholder
-    } as unknown as UserRestaurant[]);
-  }
-
-  return (
-    <div role="form" className="text-black p-16 flex flex-col gap-6">
-      <h1 className="text-xl font-semibold">Add Restaurant</h1>
-      <Form {...addRestaurantPopUpForm}>
-        <form
-          onSubmit={addRestaurantPopUpForm.handleSubmit(onSubmit)}
-          className="space-y-6 flex flex-col gap-4"
-        >
-          <FormField
-            control={addRestaurantPopUpForm.control}
-            name="restaurantName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Restaurant Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="Yummies" {...field}/>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          ></FormField>
-          <Button type="submit" className="text-white w-1/3">
-            Create
-          </Button>
-        </form>
-      </Form>
-    </div>
-  );
-};
-
-
-
-
-
-
-
-
-
-
-// This popup shows more information about the restaurant that was
-// clicked, and (currently) provides an option for users to delete it
-// from the map
-export const RestaurantLabelPopUp = ({restaurant}: RestaurantDetailPopUpProps) => {
-  return (
-   <div className="text-black p-16 flex flex-col gap-6">
-      <h1 className="text-xl font-semibold">{restaurant.name}</h1>
-    </div>
-  )
-}
-
-
-
-
-
-
-
+import { UserRestaurantAPI } from "@entities/restaurant";
+import { useRestaurantManagerStore } from "@features/manage-restaurants";
+import { useQuery } from "@tanstack/react-query";
+import { AddRestaurantPopUp } from "@features/manage-restaurants";
+import { ViewRestaurantPopUp } from "@features/manage-restaurants";
 
 
 
@@ -145,6 +19,9 @@ export const RestaurantMap = () => {
     queryFn: UserRestaurantAPI.get,
   });
 
+  // Note: We use refs because we want these to persist across renders,
+  // and they are specific to this widget only so we have not lifted
+  // their state upward
   const mapContainer = useRef<HTMLDivElement | null>(null);
   const map = useRef<maplibregl.Map | null>(null);
   const markers = useRef<Map<UUID, maplibregl.Marker>>(new Map());
@@ -153,11 +30,13 @@ export const RestaurantMap = () => {
   // maplibre gl to handle the style/lifecycle/creation of the pop up,
   // and React to handle the rendering, hence why we need to track the
   // HTML element and MaplibreGL.Popup instance.
-  const [popupState, setPopupState] = useState<{
-    element: HTMLDivElement;
-    instance: maplibregl.Popup;
-    lnglat: maplibregl.LngLat;
-  } | null>(null);
+  const {  
+    context,
+    activeMapPopup,
+    setContext,
+    setClickLocation,
+    setPopup 
+  } = useRestaurantManagerStore();
 
   // This effect is responsible for initializing the map, including
   // the pop up effect for when the user wants to add a restaurant
@@ -181,7 +60,6 @@ export const RestaurantMap = () => {
     // content via. createPortal
     mapInstance.on("click", (e: maplibregl.MapMouseEvent & Object) => {
       const popupNode = document.createElement("div");
-
       const popup = new maplibregl.Popup({
         maxWidth: "none",
         className: "popup",
@@ -190,11 +68,9 @@ export const RestaurantMap = () => {
         .setDOMContent(popupNode)
         .addTo(mapInstance);
 
-      setPopupState({
-        element: popupNode,
-        instance: popup,
-        lnglat: e.lngLat,
-      });
+      setContext('adding-restaurant');
+      setClickLocation(e.lngLat)
+      setPopup({element: popupNode, instance: popup})
     });
 
     // Cleanup
@@ -251,6 +127,7 @@ export const RestaurantMap = () => {
   if (isPending) console.log("Loading...");
   if (isError) console.error(`Error: ${error}`);
 
+
   // Our map is a div with its ref set to the mapContainer, with
   // a restaurant popup inside of it that appears if the popup state
   // is not null (ie. the user has clicked on the map)
@@ -258,22 +135,29 @@ export const RestaurantMap = () => {
   // createPortal allows the app providers to be available to the popup
   // component even though maplibre gl dynamically adds elements
   // directly to the DOM
+  //
+  // We will choose which React component to render (for the popup)
+  // depending on the current user context.
+  const clickPopUp = (() => {
+    switch (context) {
+      case 'adding-restaurant':
+        return <AddRestaurantPopUp/>
+      
+      case 'viewing-restaurant':
+        return <ViewRestaurantPopUp/>
+      
+      default:
+        return null;
+    }
+  })();
+
   return (
     <div
       ref={mapContainer}
       className="w-full h-full"
     >
-      {popupState &&
-        createPortal(
-          <AddRestaurantPopUp
-            onClose={() => {
-              popupState.instance?.remove();
-              setPopupState(null);
-            }}
-            lnglat={popupState.lnglat}
-          />,
-          popupState.element,
-        )}
+    { (clickPopUp && activeMapPopup) ? 
+      createPortal(clickPopUp, activeMapPopup.element) : null}
     </div>
   );
 };
