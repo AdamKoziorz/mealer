@@ -3,10 +3,23 @@ import Box from '@mui/material/Box';
 import StarIcon from '@mui/icons-material/Star';
 import CostIcon from '@mui/icons-material/AttachMoney';
 import styled from '@emotion/styled';
-import { updateSelectedRestaurant, useSelectedRestaurantQuery } from '@features/manage-restaurants/model';
+
+import { 
+    useUpdateSelectedRestaurant,
+    useSelectedRestaurant
+} from '@features/manage-restaurants/hooks';
+
 import { useEffect, useState } from 'react';
 
-const starLabels: { [index: string]: string } = {
+
+/**
+ * This code violates the DRY principle. Maybe in the future, I will
+ * refactor this. However, I do not see it as particularly urgent to
+ * refactor given the fact that I know for a fact there will only be
+ * these two ratings that exist for a restaurant.
+ */
+
+const STAR_LABELS: { [index: string]: string } = {
   0: 'No Star Rating',
   0.5: 'Dogshit',
   1: 'Trash',
@@ -20,7 +33,7 @@ const starLabels: { [index: string]: string } = {
   5: 'Peak',
 };
 
-const costLabels: { [index: string]: string } = {
+const COST_LABELS: { [index: string]: string } = {
   0: 'No Cost Rating',
   1: 'Cheap',
   2: 'Affordable',
@@ -30,11 +43,11 @@ const costLabels: { [index: string]: string } = {
 };
 
 function getStarLabelText(value: number) {
-  return `${value} Star${value !== 1 ? 's' : ''}, ${starLabels[value]}`;
+  return `${value} Star${value !== 1 ? 's' : ''}, ${STAR_LABELS[value]}`;
 }
 
 function getCostLabelText(value: number) {
-  return `${value} Cost${value !== 1 ? 's' : ''}, ${costLabels[value]}`;
+  return `${value} Cost${value !== 1 ? 's' : ''}, ${COST_LABELS[value]}`;
 }
 
 const StyledCostRating = styled(Rating)({
@@ -47,8 +60,8 @@ const StyledCostRating = styled(Rating)({
 });
 
 export const StarRating = () => {
-    const { isPending, isError, error, selectedRestaurant } = useSelectedRestaurantQuery();
-    const selectedRestaurantUpdate = updateSelectedRestaurant();
+    const { isPending, isError, error, selectedRestaurant } = useSelectedRestaurant();
+    const selectedRestaurantUpdate = useUpdateSelectedRestaurant();
 
     // Pending and Error states (not implemented)
     if (isPending) console.log("Loading...");
@@ -65,7 +78,7 @@ export const StarRating = () => {
   return (
     <Box sx={{ width: 250, display: 'flex', alignItems: 'center' }}>
       <Rating
-        name="hover-feedback"
+        name="star-rating"
         value={value}
         precision={0.5}
         getLabelText={getStarLabelText}
@@ -82,7 +95,7 @@ export const StarRating = () => {
         emptyIcon={<StarIcon style={{ opacity: 0.55 }} fontSize="inherit" />}
       />
       {value !== null && (
-        <Box sx={{ ml: 2 }}>{starLabels[hover !== -1 ? hover : value]}</Box>
+        <Box sx={{ ml: 2 }}>{STAR_LABELS[hover !== -1 ? hover : value]}</Box>
       )}
     </Box>
   );
@@ -90,8 +103,8 @@ export const StarRating = () => {
 
 
 export const CostRating = () => {
-    const { isPending, isError, error, selectedRestaurant } = useSelectedRestaurantQuery();
-    const selectedRestaurantUpdate = updateSelectedRestaurant();
+    const { isPending, isError, error, selectedRestaurant } = useSelectedRestaurant();
+    const selectedRestaurantUpdate = useUpdateSelectedRestaurant();
 
     // Pending and Error states (not implemented)
     if (isPending) console.log("Loading...");
@@ -108,7 +121,7 @@ export const CostRating = () => {
   return (
     <Box sx={{ width: 250, display: 'flex', alignItems: 'center' }}>
       <StyledCostRating
-        name="hover-feedback"
+        name="cost-rating"
         value={value}
         precision={1}
         getLabelText={getCostLabelText}
@@ -126,7 +139,7 @@ export const CostRating = () => {
         icon={<CostIcon fontSize="inherit" />}
       />
       {value !== null && (
-        <Box sx={{ ml: 2 }}>{costLabels[hover !== -1 ? hover : value]}</Box>
+        <Box sx={{ ml: 2 }}>{COST_LABELS[hover !== -1 ? hover : (value ?? 0)]}</Box>
       )}
     </Box>
   );

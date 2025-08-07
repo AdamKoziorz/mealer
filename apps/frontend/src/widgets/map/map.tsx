@@ -1,14 +1,20 @@
 import "./map.css";
 
-import { useEffect, useRef } from "react";
+import MarkerIcon from "@mui/icons-material/Room"
+
 import maplibregl from "maplibre-gl";
 import type { UUID } from "crypto";
+
 import { createPortal } from "react-dom";
-import { UserRestaurantAPI } from "@entities/restaurant";
-import { useRestaurantManagerStore } from "@features/manage-restaurants";
+import { createRoot } from "react-dom/client";
+import { useEffect, useMemo, useRef } from "react";
+
 import { useQuery } from "@tanstack/react-query";
-import { AddRestaurantPopUp } from "@features/manage-restaurants";
-import { ViewRestaurantPopUp } from "@features/manage-restaurants";
+
+import { UserRestaurantAPI } from "@entities/restaurant";
+
+import { useRMStore } from "@features/manage-restaurants/hooks";
+import { AddRestaurantPopUp } from "@features/manage-restaurants/ui";
 
 
 
@@ -30,7 +36,9 @@ export const RestaurantMap = () => {
   // maplibre gl to handle the style/lifecycle/creation of the pop up,
   // and React to handle the rendering, hence why we need to track the
   // HTML element and MaplibreGL.Popup instance.
-  const RestaurantManagerStore = useRestaurantManagerStore();
+  const RMStore = useRMStore();
+
+
 
   // This effect is responsible for initializing the map, including
   // the pop up effect for when the user wants to add a restaurant
@@ -52,24 +60,7 @@ export const RestaurantMap = () => {
     // the coordinates of where the user clicked. When this popup state
     // is not null, React will render the AddRestaurantPopUp component
     // content via. createPortal
-    mapInstance.on("click", (e: maplibregl.MapMouseEvent & Object) => {
-      e.originalEvent.stopPropagation()
-
-      const popupNode = document.createElement("div");
-      const popup = new maplibregl.Popup({
-        maxWidth: "none",
-        className: "popup",
-      })
-        .setLngLat(e.lngLat)
-        .setDOMContent(popupNode)
-        .addTo(mapInstance);
-
-      RestaurantManagerStore.dispatch({
-        type: 'rm/click-empty-to-add',
-        clickLocation: e.lngLat,
-        activeMapPopup: {element: popupNode, instance: popup}
-      })
-    });
+    mapInstance.on("click", handleMapClick)
 
     // Cleanup
     return () => {
@@ -79,6 +70,41 @@ export const RestaurantMap = () => {
       markers.current.clear();
     };
   }, []);
+
+
+  // Handles any clicks to the map
+  const handleMapClick = (e: maplibregl.MapMouseEvent & Object) => {
+    e.originalEvent.stopPropagation();
+    
+    const currentState = useRMStore.getState()
+
+    // Only if we are in an idle state should we create the popup to
+    // add the restaurant. This enables toggling.
+    if (currentState.context === 'rm/set-idle') {
+        const popupNode = document.createElement("div");
+        const popup = new maplibregl.Popup({
+            maxWidth: "none",
+            className: "popup",
+        })
+            .setLngLat(e.lngLat)
+            .setDOMContent(popupNode)
+            .addTo(map.current!);
+
+        RMStore.dispatch({
+            type: 'rm/click-empty-to-add',
+            clickLocation: e.lngLat,
+            activeMapPopup: { element: popupNode, instance: popup },
+        });
+
+    // In all other cases, when the map is clicked, we should idle.
+    // This enables toggling.
+    } else {
+        currentState.activeMapPopup?.instance.remove();
+        RMStore.dispatch({ type: 'rm/set-idle' });
+    }
+  }
+
+
 
   // This effect is responsible for managing the markers that are
   // visualized on the map. Whenever the data (userRestaurants) changes,
@@ -115,39 +141,42 @@ export const RestaurantMap = () => {
         // for when it is clicked.
       } else {
           
-        const marker = new maplibregl.Marker()
+        // We want to create a custom Marker on the map
+        // Use createRoot to allow React components to be used
+        // for DOM elements that MapLibre GL creates
+        const markerDiv = document.createElement('div');
+        const markerRoot = createRoot(markerDiv);
+        
+        markerRoot.render(
+          <div className="flex flex-col items-center !-mt-18">
+            <div className="!label text-black !bg-red-50 !py-2 !px-4 rounded shadow font-sans font-normal leading-snug">{restaurant.name}</div>
+            <MarkerIcon className="!w-12 !h-12 align-center justify-center" sx={{color: "red"}}/>
+          </div>
+        )
+
+        const marker = new maplibregl.Marker({element: markerDiv})
           .setLngLat([restaurant.longitude, restaurant.latitude])
           .addTo(map.current!)
         
-        const markerElement = marker.getElement();
-
-        markerElement.addEventListener('click', (e) => {
+        marker.getElement().addEventListener('click', (e) => {
           e.stopPropagation();
 
+          const currentState = useRMStore.getState()
           const lngLat = new maplibregl.LngLat(restaurant.longitude, restaurant.latitude)
-          const popupNode = document.createElement("div");
-          const popup = new maplibregl.Popup({
-            maxWidth: "none",
-            className: "popup no-tip",
-          })
-            .setLngLat(lngLat)
-            .setDOMContent(popupNode)
-            .addTo(map.current!);
 
-          RestaurantManagerStore.dispatch({
+          // If there is currently a popup, then we want to clean it up before
+          // selecting the restaurant
+          if (currentState.context === 'rm/click-empty-to-add') {
+            currentState.activeMapPopup?.instance.remove();
+          } 
+          
+          RMStore.dispatch({
             type: 'rm/select-restaurant',
             selectedRestaurant: restaurant.id,
-            clickLocation: lngLat,
-            activeMapPopup: {element: popupNode, instance: popup}
-          })
-
-          popup.on('close', () => {
-            RestaurantManagerStore.dispatch({
-              type: 'rm/set-idle'
-            })
+            clickLocation: lngLat
           });
           
-          const zoomLevel = Math.max(16, map.current!.getZoom());
+          const zoomLevel = Math.max(18, map.current!.getZoom());
 
           map.current?.flyTo({
             center: lngLat,
@@ -166,37 +195,32 @@ export const RestaurantMap = () => {
   if (isPending) console.log("Loading...");
   if (isError) console.error(`Error: ${error}`);
 
-
   // Our map is a div with its ref set to the mapContainer, with
   // a restaurant popup inside of it that appears if the popup state
-  // is not null (ie. the user has clicked on the map)
+  // is not null (ie. the user has clicked on the map).
   //
   // createPortal allows the app providers to be available to the popup
   // component even though maplibre gl dynamically adds elements
-  // directly to the DOM
+  // directly to the DOM.
   //
   // We will choose which React component to render (for the popup)
   // depending on the current user context.
-  const clickPopUp = (() => {
-    switch (RestaurantManagerStore.context) {
-      case 'rm/click-empty-to-add':
-        return <AddRestaurantPopUp/>
-      
-      case 'rm/select-restaurant':
-        return <ViewRestaurantPopUp/>
-      
-      default:
-        return null;
+
+  const clickPopUp = useMemo(() => {
+    if (RMStore.context === 'rm/click-empty-to-add') {
+      return <AddRestaurantPopUp/>;
     }
-  })();
+    return null;
+  }, [RMStore.context]);
+
 
   return (
     <div
       ref={mapContainer}
       className="w-full h-full"
     >
-    { (RestaurantManagerStore.activeMapPopup) ? 
-      createPortal(clickPopUp, RestaurantManagerStore.activeMapPopup.element) : null}
+    { (RMStore.activeMapPopup) && 
+      createPortal(clickPopUp, RMStore.activeMapPopup.element) }
     </div>
   );
 };

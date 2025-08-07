@@ -23,9 +23,9 @@
 }
 
 .popup .maplibregl-popup-tip {
-  border-width: 2rem;
+  border-width: 2rem !important;
 }
 
 .popup .maplibregl-popup-tip.no-tip {
-  border-width: 0rem;
+  border-width: 0rem !important;
 }

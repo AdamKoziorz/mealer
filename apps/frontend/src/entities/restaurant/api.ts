@@ -12,8 +12,9 @@ export type UserRestaurant = {
     "latitude": LngLat["lat"],    // number
     "rating": number,
     "price_range": number,
-    "tags": string[],
-    "notable_items": string[]
+    "descriptors": string[],
+    "menu_items": string[],
+    "notes": string
 }
 
 // Also for now, we are going to hardcode a localhost variable

@@ -4,12 +4,12 @@ import { RestaurantDashboard } from '@widgets/dashboard';
 
 const HomePage = () => {
     return (
-        <main className="flex h-full">
-            <section aria-label="Restaurant Dashboard" className="flex w-150 max-w-[30vw] flex-col text-black">
-                <RestaurantDashboard />
-            </section>
-            <section aria-label="Restaurant Map" className="flex-auto relative h-screen">
+        <main className="relative w-screen h-screen">
+            <section aria-label="Restaurant Map" className="absolute inset-0 z-0">
                 <RestaurantMap />
+            </section>
+            <section aria-label="Restaurant Dashboard" className="absolute top-4 left-4 z-10 w-150 max-w-[30vw] flex-col text-black">
+                <RestaurantDashboard />
             </section>
         </main>
     );

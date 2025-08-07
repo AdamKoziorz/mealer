@@ -1,51 +1,36 @@
-import { UserRestaurantAPI, type UserRestaurant } from "@entities/restaurant";
-import { useRestaurantManagerStore } from "@features/manage-restaurants";
-import { RestaurantDetails } from "@features/manage-restaurants";
+import { UserRestaurantAPI } from "@entities/restaurant";
+import { useRMStore } from "@features/manage-restaurants/hooks";
+import { RestaurantDetails } from "@features/manage-restaurants/ui";
 import { useQuery } from "@tanstack/react-query"
 
 
 export const RestaurantDashboard = () => {
-    const { isPending, isError, data } = useQuery({
+    const { isPending, isError } = useQuery({
         queryKey: ["userRestaurants"],
         queryFn: UserRestaurantAPI.get,
       });
 
-    const RestaurantManagerStore = useRestaurantManagerStore();
+    const RestaurantManagerStore = useRMStore();
 
-    if (isPending) return <div>Loading...</div>;
-    if (isError) return <div>Error!</div>;
-
-    const component = (() => { 
+    const renderDashboard = () => { 
         switch (RestaurantManagerStore.context) {
             case 'rm/set-idle':
             case 'rm/click-empty-to-add':
-                return <>
-                    <h1 className="text-4xl !pb-8">Your Restaurants</h1>
-                    { data.map((restaurant: UserRestaurant) => 
-                        <div 
-                            key={restaurant.id}
-                            className="flex space-between"
-                        >
-                            <h2 className="text-2xl none">
-                                {restaurant.name}
-                            </h2>
-                        </div>
-                    )}
-                </>
+                return <h1 className="text-4xl font-semibold">Welcome to Mealer!</h1>
 
             case 'rm/select-restaurant':
+                if (isPending) return <div>Loading...</div>;
+                if (isError) return <div>Error!</div>;
                 return <RestaurantDetails/>
 
             default:
-                return undefined;
+                return null;
         }
-
-
-    })();
+    };
 
     return (
-        <div className="!p-12 !m-4 !border-2 !border-solid !rounded-xl">
-            {component}
+        <div className="!p-12 !m-4 !border-2 !border-solid !rounded-xl !bg-red-50">
+            {renderDashboard()}
         </div>   
     )
 }

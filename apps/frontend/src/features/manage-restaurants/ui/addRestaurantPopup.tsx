@@ -2,7 +2,6 @@
 import z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { UserRestaurantAPI, type UserRestaurant } from "@entities/restaurant";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { Input } from "@shared/ui";
@@ -15,13 +14,15 @@ import {
   FormLabel,
   FormMessage,
 } from "@shared/ui";
-import { useRestaurantManagerStore } from "@features/manage-restaurants/model";
+
+import { UserRestaurantAPI, type UserRestaurant } from "@entities/restaurant";
+import { useRMStore } from "@features/manage-restaurants/hooks";
 
 const AddRestaurantPopupFormSchema = z.object({
-  restaurantName: z.string().min(1, {
-    message: "Please input a non-empty name!",
-  }),
-});
+  restaurantName: z.string()
+    .min(1, { message: "Please input a non-empty name!" })
+    .max(40, { message: "Name must be less than 40 characters"}),
+  });
 
 // This popup provides a form to the user that allows them to add restaurants
 // onto the map. Requires the location of where the popup opened, and a
@@ -29,14 +30,13 @@ const AddRestaurantPopupFormSchema = z.object({
 export const AddRestaurantPopUp = () => {
   const queryClient = useQueryClient();
   
-  const RestaurantManagerStore = useRestaurantManagerStore();
+  const RestaurantManagerStore = useRMStore();
 
-  // Eventually, we are also going to have to do some state handling
-  // (We do not have any Pending/Error state handling yet)
-  const createMutation = useMutation({
+  const useCreateRestaurant = useMutation({
     mutationFn: UserRestaurantAPI.post,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["userRestaurants"] });
+      RestaurantManagerStore.activeMapPopup?.instance.remove();
       RestaurantManagerStore.dispatch({
         type: 'rm/set-idle'
       })
@@ -57,16 +57,20 @@ export const AddRestaurantPopUp = () => {
       id: crypto.randomUUID(),          // TODO: Should be on backend
       name: data.restaurantName,
       address: "",                      
-      longitude: RestaurantManagerStore.clickLocation!.lng,    // I know this is not null - assert
-      latitude: RestaurantManagerStore.clickLocation!.lat,     // I know this is not null - assert
+      longitude: RestaurantManagerStore.clickLocation!.lng,
+      latitude: RestaurantManagerStore.clickLocation!.lat,
       rating: 0,                        
       price_range: 0,                 
-      tags: [],                       
-      notable_items: [],                
+      descriptors: [],                       
+      menu_items: [],
+      notes: ""                
     }
 
-    createMutation.mutate(newRestaurant);
+    useCreateRestaurant.mutate(newRestaurant);
   }
+
+  // Eventually, we are also going to have to do some state handling
+  // (We do not have any Pending/Error state handling yet)
 
   return (
     <div role="form" className="text-black p-16 flex flex-col gap-6">
@@ -89,7 +93,7 @@ export const AddRestaurantPopUp = () => {
               </FormItem>
             )}
           ></FormField>
-          <Button type="submit" className="text-white w-1/3">
+          <Button type="submit" variant={'default'} className="w-1/3">
             Create
           </Button>
         </form>
