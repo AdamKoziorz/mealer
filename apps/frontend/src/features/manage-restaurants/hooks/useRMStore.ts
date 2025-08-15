@@ -17,14 +17,18 @@ type RestaurantManagerStoreContext =
     | 'rm/set-idle'
     | 'rm/select-restaurant'
     | 'rm/click-empty-to-add'
+    | 'rm/moving-restaurant'
 
 type RestaurantManagerStoreState = {
     selectedRestaurant: UserRestaurant['id'] | null;
     clickLocation: maplibregl.LngLat | null;
+    dragStart: maplibregl.LngLat | null;
+    dragLocation: maplibregl.LngLat | null;
     activeMapPopup: MapPopup | null;
     context: RestaurantManagerStoreContext;
 }
 
+// TODO: Can we fix the activeMapPopup?
 type RestaurantManagerStoreAction =
     | { type: 'rm/set-idle' }
     | { type: 'rm/select-restaurant';
@@ -33,6 +37,13 @@ type RestaurantManagerStoreAction =
     | { type: 'rm/click-empty-to-add';
         clickLocation : maplibregl.LngLat;
         activeMapPopup: MapPopup }
+    | { type: 'rm/moving-restaurant';
+        activeMapPopup: MapPopup | null;
+        clickLocation: maplibregl.LngLat | null;
+        dragStart: maplibregl.LngLat | null;
+        dragLocation: maplibregl.LngLat | null;
+    };
+
 
 type RestaurantManagerStore = RestaurantManagerStoreState & {
     dispatch:
@@ -50,6 +61,8 @@ const RestaurantManagerStoreReducer = (
                 ... state,
                 selectedRestaurant: null,
                 clickLocation : null,
+                dragLocation: null,
+                dragStart: null,
                 activeMapPopup: null,
                 context: action.type
             }
@@ -59,6 +72,8 @@ const RestaurantManagerStoreReducer = (
                 ... state,
                 selectedRestaurant: action.selectedRestaurant,
                 clickLocation: action.clickLocation,
+                dragLocation: null,
+                dragStart: null,
                 activeMapPopup: null,
                 context: action.type
             }
@@ -69,10 +84,25 @@ const RestaurantManagerStoreReducer = (
                 ... state,
                 selectedRestaurant: null,
                 clickLocation: action.clickLocation,
+                dragLocation: null,
+                dragStart: null,
                 activeMapPopup: action.activeMapPopup,
                 context: action.type
             }
         }
+
+        case 'rm/moving-restaurant': {
+            return {
+                ... state,
+                selectedRestaurant: state.selectedRestaurant,
+                clickLocation: action.clickLocation,
+                dragLocation: action.dragLocation,
+                dragStart: action.dragStart,
+                activeMapPopup: action.activeMapPopup,
+                context: action.type
+            }
+        }
+
         default: {
             return state;
         }
@@ -81,7 +111,9 @@ const RestaurantManagerStoreReducer = (
 
 const RestaurantManagerStoreInitialState: RestaurantManagerStoreState = {
     selectedRestaurant: null,
-    clickLocation : null,
+    clickLocation: null,
+    dragLocation: null,
+    dragStart: null,
     activeMapPopup: null,
     context: 'rm/set-idle'
 }

@@ -29,3 +29,13 @@
 .popup .maplibregl-popup-tip.no-tip {
   border-width: 0rem !important;
 }
+
+.popup-move .maplibregl-popup-content {
+    width: 10rem !important;
+    padding: 1.2rem !important;
+    border-radius: 1.2rem !important;
+}
+
+.popup-move .maplibregl-popup-close-button {
+    display: none
+}

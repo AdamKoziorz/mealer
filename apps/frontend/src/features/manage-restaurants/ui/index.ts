@@ -1,4 +1,5 @@
 export { AddRestaurantPopUp } from './AddRestaurantPopup'
+export { MoveRestaurantPopUp } from './MoveRestaurantPopup'
 export { RestaurantDetails } from './RestaurantDetails'
 export { StarRating, CostRating } from './RestaurantRatings'
 

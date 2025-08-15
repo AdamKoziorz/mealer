@@ -30,14 +30,14 @@ const AddRestaurantPopupFormSchema = z.object({
 export const AddRestaurantPopUp = () => {
   const queryClient = useQueryClient();
   
-  const RestaurantManagerStore = useRMStore();
+  const RMStore = useRMStore();
 
   const useCreateRestaurant = useMutation({
     mutationFn: UserRestaurantAPI.post,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["userRestaurants"] });
-      RestaurantManagerStore.activeMapPopup?.instance.remove();
-      RestaurantManagerStore.dispatch({
+      RMStore.activeMapPopup?.instance.remove();
+      RMStore.dispatch({
         type: 'rm/set-idle'
       })
     },
@@ -57,8 +57,8 @@ export const AddRestaurantPopUp = () => {
       id: crypto.randomUUID(),          // TODO: Should be on backend
       name: data.restaurantName,
       address: "",                      
-      longitude: RestaurantManagerStore.clickLocation!.lng,
-      latitude: RestaurantManagerStore.clickLocation!.lat,
+      longitude: RMStore.clickLocation!.lng,
+      latitude: RMStore.clickLocation!.lat,
       rating: 0,                        
       price_range: 0,                 
       descriptors: [],                       

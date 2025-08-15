@@ -23,6 +23,9 @@ export const RestaurantDashboard = () => {
                 if (isError) return <div>Error!</div>;
                 return <RestaurantDetails/>
 
+            case 'rm/moving-restaurant':
+                return <div className="text-4xl font-semibold">Moving Restaurant...</div>
+
             default:
                 return null;
         }

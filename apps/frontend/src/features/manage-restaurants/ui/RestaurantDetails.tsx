@@ -31,6 +31,14 @@ export const RestaurantDetails = () => {
         })
     }
 
+    const handleMoveClick = () => {
+        RestaurantManagerStore.dispatch({
+            type: 'rm/moving-restaurant',
+            activeMapPopup: null,
+            dragLocation: null
+        })
+    }
+
     const handleDeleteClick = () => {
         if (selectedRestaurant) {
             selectedRestaurantDelete.mutate(selectedRestaurant);
@@ -41,7 +49,6 @@ export const RestaurantDetails = () => {
         if (!selectedRestaurant) return;
         updateSelectedRestaurant.mutate({ ...selectedRestaurant, ...partial });
     };
-
 
     // Memoized tags to be prop drilled to their corresponding tags
     const globalDescriptorTags = useMemo(() => (
@@ -92,8 +99,9 @@ export const RestaurantDetails = () => {
                 value={note}
             />
             <div aria-label="Button Container" className="flex flex-row justify-between !pt-12">
-                <Button variant={'default'} onClick={handleBackClick} className="w-1/3">Close</Button>
-                <Button variant={'destructive'} onClick={handleDeleteClick} className="w-1/3">Delete</Button>
+                <Button variant={'default'} onClick={handleBackClick} className="w-1/4">Close</Button>
+                <Button variant={'secondary'} onClick={handleMoveClick} className="w-1/4">Move</Button>
+                <Button variant={'destructive'} onClick={handleDeleteClick} className="w-1/4">Delete</Button>
             </div>
         </div>
     )

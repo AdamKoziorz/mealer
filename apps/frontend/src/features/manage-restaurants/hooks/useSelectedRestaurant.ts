@@ -1,6 +1,7 @@
 import { UserRestaurantAPI, useUserRestaurants } from "@entities/restaurant";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRMStore } from "./useRMStore";
+import type { LngLat } from "maplibre-gl";
 
 // A custom hook to query the currently selected Restaurant (SelRest)
 export const useSelectedRestaurant = () => {
@@ -12,9 +13,12 @@ export const useSelectedRestaurant = () => {
         (restaurant) => restaurant.id === selRestID
     ) ?? null;
 
+    const currentDragLocation: null | LngLat = null
+
     return {
         ...queryState,
-        selectedRestaurant: restaurant
+        selectedRestaurant: restaurant,
+        currentLocation: currentDragLocation
     }
 }
 
