@@ -10,10 +10,11 @@
 
 ## (Expected) Tech Stack
 
-- **Frontend**: React, TypeScript, Tailwind, Vite  
-- **Backend**: Express, PostgreSQL, Prisma 
+- **Frontend**: React, TypeScript, Tailwind, Vite, Zustand, React Query, MapLibre GL
+- **Backend**: Express, PostgreSQL, Kysely
 - **Authentication**: Passport.js
 - **Testing**: Playwright
+- **DevOps**: Docker
 
 ## Contributing
 
