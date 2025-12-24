@@ -19,7 +19,7 @@ export const MoveRestaurantPopUp = () => {
         }
 
         const restaurant = restaurants?.find(
-            (restaurant) => restaurant.id === selectedRestaurantId
+            (restaurant) => restaurant.user_restaurant_id === selectedRestaurantId
         );
 
         if (!restaurant) {

@@ -54,13 +54,12 @@ export const AddRestaurantPopUp = () => {
 
   function onSubmit(data: z.infer<typeof AddRestaurantPopupFormSchema>) {
     const newRestaurant: UserRestaurant = {
-      id: crypto.randomUUID(),          // TODO: Should be on backend
-      name: data.restaurantName,
-      address: "",                      
+      user_restaurant_id: crypto.randomUUID(),
+      name: data.restaurantName,                     
       longitude: RMStore.clickLocation!.lng,
       latitude: RMStore.clickLocation!.lat,
-      rating: 0,                        
-      price_range: 0,                 
+      rating: null,                        
+      price_range: null,                 
       descriptors: [],                       
       menu_items: [],
       notes: ""                

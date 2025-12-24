@@ -35,7 +35,9 @@ export const RestaurantDetails = () => {
         RestaurantManagerStore.dispatch({
             type: 'rm/moving-restaurant',
             activeMapPopup: null,
-            dragLocation: null
+            dragLocation: null,
+            clickLocation: null,
+            dragStart: null
         })
     }
 

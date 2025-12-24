@@ -2,11 +2,14 @@
 
 import { app } from './app'
 
-const PORT = process.env.EXPRESS_PORT || 3000
+import dotenv from 'dotenv';
+dotenv.config();
+
+const EXPRESS_PORT = process.env.EXPRESS_PORT || 6789
 
 try {
-    app.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`)
+    app.listen(EXPRESS_PORT, () => {
+        console.log(`Server running on port ${EXPRESS_PORT}`)
     })
 } catch (error) {
     console.error(`Failed to start server: ${error}`)

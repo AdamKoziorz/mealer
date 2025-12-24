@@ -67,12 +67,15 @@ export const StarRating = () => {
     if (isPending) console.log("Loading...");
     if (isError) console.error(`Error: ${error}`);
 
-    const [value, setValue] = useState<number | null>(0);
+    const [value, setValue] = useState<number | null>(null);
     const [hover, setHover] = useState(-1);
 
     // Initialize the rating
     useEffect(() => {
-        if (selectedRestaurant) setValue(selectedRestaurant.rating)
+        if (selectedRestaurant) {
+          const safeCurrentValue = (selectedRestaurant.rating ? selectedRestaurant.rating : 0) / 2;
+          setValue(safeCurrentValue)
+        }
     }, [selectedRestaurant])
 
   return (
@@ -83,7 +86,7 @@ export const StarRating = () => {
         precision={0.5}
         getLabelText={getStarLabelText}
         onChange={(_, newValue) => {
-          const safeNewValue = newValue ? newValue : 0;
+          let safeNewValue = newValue ? (newValue * 2) : null;
           if (selectedRestaurant) {
             selectedRestaurantUpdate.mutate({...selectedRestaurant, rating: safeNewValue});
           }
@@ -115,7 +118,10 @@ export const CostRating = () => {
 
     // Initialize the rating
     useEffect(() => {
-        if (selectedRestaurant) setValue(selectedRestaurant.price_range)
+      if (selectedRestaurant) {
+        const safeCurrentValue = (selectedRestaurant.price_range ? selectedRestaurant.price_range : 0);
+        setValue(safeCurrentValue)
+      }
     }, [selectedRestaurant])
 
   return (
@@ -126,7 +132,7 @@ export const CostRating = () => {
         precision={1}
         getLabelText={getCostLabelText}
         onChange={(_, newValue) => {
-          const safeNewValue = newValue ? newValue : 0;
+          let safeNewValue = newValue ? newValue : null;
           if (selectedRestaurant) {
             selectedRestaurantUpdate.mutate({...selectedRestaurant, price_range: safeNewValue});
           }

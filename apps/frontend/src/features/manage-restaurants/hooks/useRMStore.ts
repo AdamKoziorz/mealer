@@ -20,7 +20,7 @@ type RestaurantManagerStoreContext =
     | 'rm/moving-restaurant'
 
 type RestaurantManagerStoreState = {
-    selectedRestaurant: UserRestaurant['id'] | null;
+    selectedRestaurant: UserRestaurant['user_restaurant_id'] | null;
     clickLocation: maplibregl.LngLat | null;
     dragStart: maplibregl.LngLat | null;
     dragLocation: maplibregl.LngLat | null;
@@ -32,7 +32,7 @@ type RestaurantManagerStoreState = {
 type RestaurantManagerStoreAction =
     | { type: 'rm/set-idle' }
     | { type: 'rm/select-restaurant';
-        selectedRestaurant: UserRestaurant['id'];
+        selectedRestaurant: UserRestaurant['user_restaurant_id'];
         clickLocation: maplibregl.LngLat }
     | { type: 'rm/click-empty-to-add';
         clickLocation : maplibregl.LngLat;

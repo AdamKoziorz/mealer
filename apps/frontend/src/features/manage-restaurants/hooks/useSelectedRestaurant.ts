@@ -10,7 +10,7 @@ export const useSelectedRestaurant = () => {
     const { data = [], ...queryState } = useUserRestaurants();
 
     const restaurant = data?.find(
-        (restaurant) => restaurant.id === selRestID
+        (restaurant) => restaurant.user_restaurant_id === selRestID
     ) ?? null;
 
     const currentDragLocation: null | LngLat = null

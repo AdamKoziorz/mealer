@@ -14,6 +14,7 @@ import MarkerIcon from "@mui/icons-material/Room";
 import { UserRestaurantAPI } from "@entities/restaurant";
 import { useRMStore } from "@features/manage-restaurants/hooks";
 import { AddRestaurantPopUp, MoveRestaurantPopUp } from "@features/manage-restaurants/ui";
+import { fetchMe } from "@entities/user/api";
 
 
 // This widget allows users to view their restaurants on a map
@@ -22,6 +23,11 @@ export const RestaurantMap = () => {
     queryKey: ["userRestaurants"],
     queryFn: UserRestaurantAPI.get,
   });
+
+  const { data: current_user_id } = useQuery({queryKey: ["me"], queryFn: fetchMe});
+
+  // Ref to track current user
+  const authenticatedUser = useRef(current_user_id);
 
   // Refs that will store data concerning the map
   const mapContainer = useRef<HTMLDivElement | null>(null);
@@ -37,7 +43,11 @@ export const RestaurantMap = () => {
   const dispatch = useRMStore((s) => s.dispatch);
 
 
-
+  // Simple useeffect to track the current user. Should be null
+  // if unauthenticated
+  useEffect(() => {
+    authenticatedUser.current = current_user_id;
+  }, [current_user_id]);
 
 
   // This effect is responsible for initializing the map, including
@@ -61,6 +71,13 @@ export const RestaurantMap = () => {
     // to, updating the UI accordingly
     const handleMapClick = (e: maplibregl.MapMouseEvent & Object) => {
 
+      // If the user is not authenticated, we do not allow interactions
+      // with the map
+      if (!authenticatedUser.current) {
+        e.originalEvent.stopPropagation();
+        return;
+      }
+      
       // Get the current state and context that we are in
       const currentState = useRMStore.getState();
 
@@ -129,8 +146,6 @@ export const RestaurantMap = () => {
   }, []);
 
 
-
-
   
   // This effect is responsible for managing the markers that are
   // visualized on the map, including their creation and deletion.
@@ -138,10 +153,23 @@ export const RestaurantMap = () => {
   // updated through a "diff". Here is also we will set up event
   // listeners for the markers.
   useEffect(() => {
-    if (!data || !map.current) return;
+    if (!map.current) return;
+
+    if (!current_user_id) {
+      // User logged out → remove all markers
+      markers.current.forEach((m) => {
+        const clickHandler = (m as any).clickHandler;
+        if (clickHandler) m.getElement().removeEventListener("click", clickHandler);
+        m.remove();
+      });
+      markers.current.clear();
+      return;
+    }
+
+    if (!data) return;
 
     const currentMarkers = markers.current;
-    const newDataIDs = new Set(data.map((r) => r.id));
+    const newDataIDs = new Set(data.map(r => r.user_restaurant_id));
 
     // Delete stale markers and clean up their listeners
     for (const [id, marker] of currentMarkers) {
@@ -157,7 +185,7 @@ export const RestaurantMap = () => {
 
     // Add or update markers
     data.forEach((restaurant) => {
-      const existing = currentMarkers.get(restaurant.id);
+      const existing = currentMarkers.get(restaurant.user_restaurant_id);
 
       // Check if we need to update
       if (existing) {
@@ -227,7 +255,7 @@ export const RestaurantMap = () => {
             default:
               dispatch({
                 type: "rm/select-restaurant",
-                selectedRestaurant: restaurant.id,
+                selectedRestaurant: restaurant.user_restaurant_id,
                 clickLocation: markerLngLat
               });
 
@@ -241,12 +269,12 @@ export const RestaurantMap = () => {
         };
 
         marker.getElement().addEventListener("click", handleMarkerClick);
-        currentMarkers.set(restaurant.id, marker);
+        currentMarkers.set(restaurant.user_restaurant_id, marker);
       }
     });
 
     return;
-  }, [data, context]);
+  }, [data, current_user_id, context]);
 
 
 
