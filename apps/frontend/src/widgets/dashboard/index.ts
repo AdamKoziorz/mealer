@@ -1,0 +1,1 @@
+export { RestaurantDashboard } from './dashboard'
