@@ -59,7 +59,7 @@ export const RestaurantMap = () => {
 
     const mapInstance = new maplibregl.Map({
       container: mapContainer.current,
-      style: "https://tiles.openfreemap.org/styles/positron",
+      style: "https://tiles.openfreemap.org/styles/bright",
       center: [-78.83, 43.9],
       zoom: 9.5,
     });
