@@ -12,11 +12,11 @@
 
 ## Tech Stack
 
-- **Frontend**: React, TypeScript, Tailwind, Vite, Zustand, React Query, MapLibre GL
+- **Frontend**: React, TypeScript, Tailwind, Zustand, React Query, MapLibre GL
 - **Backend**: Express, PostgreSQL, Kysely
-- **Authentication**: Google-Auth-Library
+- **Auth/Identity**: Google-Auth-Library
 - **Testing**: Playwright, Vitest
-- **DevOps**: Docker, Sentry
+- **Deployment / Tooling / Logging**: Vite, Docker, Fly.io, Pino, Posthog
 
 ## Contributing
 
