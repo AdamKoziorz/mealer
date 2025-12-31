@@ -2,24 +2,22 @@
 
 > A restaurant recommender app for foodies who mainly trust their own taste
 
-## (Planned) Features
+<img width="1280" height="720" alt="image" src="https://github.com/user-attachments/assets/91d1b205-a292-43d4-8c60-6e4e6ddb94a9" />
 
-- Create a list of your favourite visited (or unvisited) restaurants
+## Main Features
+
+- Create a map of your favourite visited (or unvisited!) restaurants
 - Query your list for restaurants which fulfill your needs
 - Get daily recommendations based on stored personal preferences
 
-## (Expected) Tech Stack
+## Tech Stack
 
 - **Frontend**: React, TypeScript, Tailwind, Vite, Zustand, React Query, MapLibre GL
 - **Backend**: Express, PostgreSQL, Kysely
-- **Authentication**: Passport.js
-- **Testing**: Playwright
-- **DevOps**: Docker
+- **Authentication**: Google-Auth-Library
+- **Testing**: Playwright, Vitest
+- **DevOps**: Docker, Sentry
 
 ## Contributing
 
 This is a solo project at the moment, but please feel free to make a Discussion post if you want to give some input!
-
-## License
-
-This project is licensed under the GNU-2.0 license - see the LICENSE file for details.
