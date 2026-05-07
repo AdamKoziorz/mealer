@@ -26,8 +26,11 @@ export const useMobileRestaurantSheetSync = ({
       return;
     }
 
-    // The map does not own the sheet; entering add flow simply frees map space.
-    if (context === 'rm/click-empty-to-add') {
+    // The map does not own the sheet; add and move flows simply free map space.
+    if (
+      context === 'rm/click-empty-to-add' ||
+      context === 'rm/moving-restaurant'
+    ) {
       setDrawerOpen(false);
       setDragOffset(null);
     }
