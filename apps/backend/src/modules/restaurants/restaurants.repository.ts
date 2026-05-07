@@ -1,7 +1,11 @@
-import { db } from "../../models/database.js"
-import type { ChangeRestaurant, GeometryPoint, NewRestaurant } from "../../models/types.js"
-import type { UUID } from "crypto"
-import { sql } from "kysely"
+import { db } from '../../models/database.js';
+import type {
+  ChangeRestaurant,
+  GeometryPoint,
+  NewRestaurant,
+} from '../../models/types.js';
+import type { UUID } from 'crypto';
+import { sql } from 'kysely';
 
 export class RestaurantRepository {
   private toLocationSql(latitude?: number, longitude?: number) {
@@ -27,11 +31,11 @@ export class RestaurantRepository {
         'notes',
         'created_at',
         'updated_at',
-      sql<number>`ST_Y(location::geometry)`.as('latitude'),
-      sql<number>`ST_X(location::geometry)`.as('longitude'),
-    ])
+        sql<number>`ST_Y(location::geometry)`.as('latitude'),
+        sql<number>`ST_X(location::geometry)`.as('longitude'),
+      ])
       .where('user_id', '=', userId)
-      .execute()
+      .execute();
   }
 
   async findById(restaurantId: UUID, userId: UUID) {
@@ -54,36 +58,35 @@ export class RestaurantRepository {
       ])
       .where('user_restaurant_id', '=', restaurantId)
       .where('user_id', '=', userId)
-      .executeTakeFirst()
+      .executeTakeFirst();
   }
 
   async create(data: NewRestaurant) {
-    const { latitude, longitude, ...rest } = data
-    const location = this.toLocationSql(latitude, longitude)
+    const { latitude, longitude, ...rest } = data;
+    const location = this.toLocationSql(latitude, longitude);
 
     if (location === undefined) {
-      throw new Error("Location is required for restaurant creation");
+      throw new Error('Location is required for restaurant creation');
     }
 
     return db
-        .insertInto('user_restaurants')
-        .values({
+      .insertInto('user_restaurants')
+      .values({
         ...rest,
         location,
-        })
-        .returningAll()
-        .executeTakeFirstOrThrow()
-    }
-
+      })
+      .returningAll()
+      .executeTakeFirstOrThrow();
+  }
 
   async update(restaurantId: UUID, userId: UUID, data: ChangeRestaurant) {
-    const { latitude, longitude, ...rest } = data
-    const nextLocation = this.toLocationSql(latitude, longitude)
+    const { latitude, longitude, ...rest } = data;
+    const nextLocation = this.toLocationSql(latitude, longitude);
     const updateData = {
       ...rest,
       updated_at: new Date(),
-      ...(nextLocation !== undefined ? { location: nextLocation } : {})
-    }
+      ...(nextLocation !== undefined ? { location: nextLocation } : {}),
+    };
 
     return db
       .updateTable('user_restaurants')
@@ -91,15 +94,14 @@ export class RestaurantRepository {
       .where('user_restaurant_id', '=', restaurantId)
       .where('user_id', '=', userId)
       .returningAll()
-      .executeTakeFirst()
+      .executeTakeFirst();
   }
-
 
   async delete(restaurantId: UUID, userId: UUID) {
     return db
       .deleteFrom('user_restaurants')
       .where('user_restaurant_id', '=', restaurantId)
       .where('user_id', '=', userId)
-      .executeTakeFirst()
+      .executeTakeFirst();
   }
 }

@@ -1,34 +1,28 @@
-import { UserRestaurantAPI } from "@entities/restaurant";
-import { fetchMe, logout } from "@entities/user/api";
-import { useRMStore } from "@features/manage-restaurants/hooks";
-import { RestaurantDetails } from "@features/manage-restaurants/ui";
-import { Button } from "@shared/ui";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { UserRestaurantAPI } from '@entities/restaurant';
+import { fetchMe, logout } from '@entities/user/api';
+import { useRMStore } from '@features/manage-restaurants/hooks';
+import { RestaurantDetails } from '@features/manage-restaurants/ui';
+import { Button } from '@shared/ui';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const SERVER_URL = import.meta.env.VITE_API_URL;
 
 export const RestaurantDashboard = () => {
   const queryClient = useQueryClient();
   const authParams =
-    typeof window === "undefined"
+    typeof window === 'undefined'
       ? null
       : new URLSearchParams(window.location.search);
-  const authError = authParams?.get("error");
-  const authReason = authParams?.get("reason");
+  const authError = authParams?.get('error');
+  const authReason = authParams?.get('reason');
 
-  const {
-    data: user,
-    isPending: authLoading,
-  } = useQuery({
-    queryKey: ["me"],
+  const { data: user, isPending: authLoading } = useQuery({
+    queryKey: ['me'],
     queryFn: fetchMe,
   });
 
-  const {
-    isPending: restaurantsLoading,
-    isError,
-  } = useQuery({
-    queryKey: ["userRestaurants"],
+  const { isPending: restaurantsLoading, isError } = useQuery({
+    queryKey: ['userRestaurants'],
     queryFn: UserRestaurantAPI.get,
     enabled: !!user,
   });
@@ -47,10 +41,10 @@ export const RestaurantDashboard = () => {
     return (
       <div className="!p-4 !pb-[calc(env(safe-area-inset-bottom)+1rem)] !bg-red-50 sm:!m-4 sm:!rounded-xl sm:!border-2 sm:!p-12">
         <h1 className="mb-4 text-3xl font-semibold">Welcome to Mealer!</h1>
-        {authError === "auth_failed" ? (
+        {authError === 'auth_failed' ? (
           <div className="!mb-4 !rounded-lg !border !border-red-300 !bg-white !p-3 text-sm text-red-700">
             Google sign-in did not complete.
-            {authReason ? ` Reason: ${authReason}` : " Please try again."}
+            {authReason ? ` Reason: ${authReason}` : ' Please try again.'}
           </div>
         ) : null}
         <p className="!mt-2">
@@ -66,7 +60,7 @@ export const RestaurantDashboard = () => {
             onClick={() => {
               window.location.assign(`${SERVER_URL}/auth/google`);
             }}
-            variant={"destructive"}
+            variant={'destructive'}
             className="!px-4"
           >
             Sign in with Google
@@ -74,12 +68,12 @@ export const RestaurantDashboard = () => {
           <Button
             onClick={() => {
               window.open(
-                "https://adamkoziorz.github.io",
-                "_blank",
-                "noopener,noreferrer"
+                'https://adamkoziorz.github.io',
+                '_blank',
+                'noopener,noreferrer'
               );
             }}
-            variant={"default"}
+            variant={'default'}
             className="!px-4"
           >
             View my Personal Site!
@@ -91,13 +85,13 @@ export const RestaurantDashboard = () => {
 
   const handleLogout = async () => {
     await logout();
-    queryClient.invalidateQueries({ queryKey: ["me"] });
+    queryClient.invalidateQueries({ queryKey: ['me'] });
   };
 
   const renderDashboard = () => {
     switch (RestaurantManagerStore.context) {
-      case "rm/set-idle":
-      case "rm/click-empty-to-add":
+      case 'rm/set-idle':
+      case 'rm/click-empty-to-add':
         return (
           <>
             <h1 className="text-4xl font-semibold">Hello There!</h1>
@@ -108,7 +102,7 @@ export const RestaurantDashboard = () => {
             </p>
             <Button
               onClick={handleLogout}
-              variant={"default"}
+              variant={'default'}
               className="!mt-4 !px-4"
             >
               Log Out
@@ -116,13 +110,15 @@ export const RestaurantDashboard = () => {
           </>
         );
 
-      case "rm/select-restaurant":
+      case 'rm/select-restaurant':
         if (restaurantsLoading) return <div>Loading...</div>;
         if (isError) return <div>Error!</div>;
         return <RestaurantDetails />;
 
-      case "rm/moving-restaurant":
-        return <div className="text-4xl font-semibold">Moving Restaurant...</div>;
+      case 'rm/moving-restaurant':
+        return (
+          <div className="text-4xl font-semibold">Moving Restaurant...</div>
+        );
 
       default:
         return null;

@@ -4,13 +4,12 @@ import StarIcon from '@mui/icons-material/Star';
 import CostIcon from '@mui/icons-material/AttachMoney';
 import styled from '@emotion/styled';
 
-import { 
-    useUpdateSelectedRestaurant,
-    useSelectedRestaurant
+import {
+  useUpdateSelectedRestaurant,
+  useSelectedRestaurant,
 } from '@features/manage-restaurants/hooks';
 
 import { useEffect, useState } from 'react';
-
 
 /**
  * This code violates the DRY principle. Maybe in the future, I will
@@ -39,7 +38,7 @@ const COST_LABELS: { [index: string]: string } = {
   2: 'Affordable',
   3: 'Reasonable',
   4: 'Pricey',
-  5: 'Bougie'
+  5: 'Bougie',
 };
 
 function getStarLabelText(value: number) {
@@ -60,23 +59,25 @@ const StyledCostRating = styled(Rating)({
 });
 
 export const StarRating = () => {
-    const { isPending, isError, error, selectedRestaurant } = useSelectedRestaurant();
-    const selectedRestaurantUpdate = useUpdateSelectedRestaurant();
+  const { isPending, isError, error, selectedRestaurant } =
+    useSelectedRestaurant();
+  const selectedRestaurantUpdate = useUpdateSelectedRestaurant();
 
-    // Pending and Error states (not implemented)
-    if (isPending) console.log("Loading...");
-    if (isError) console.error(`Error: ${error}`);
+  // Pending and Error states (not implemented)
+  if (isPending) console.log('Loading...');
+  if (isError) console.error(`Error: ${error}`);
 
-    const [value, setValue] = useState<number | null>(null);
-    const [hover, setHover] = useState(-1);
+  const [value, setValue] = useState<number | null>(null);
+  const [hover, setHover] = useState(-1);
 
-    // Initialize the rating
-    useEffect(() => {
-        if (selectedRestaurant) {
-          const safeCurrentValue = (selectedRestaurant.rating ? selectedRestaurant.rating : 0) / 2;
-          setValue(safeCurrentValue)
-        }
-    }, [selectedRestaurant])
+  // Initialize the rating
+  useEffect(() => {
+    if (selectedRestaurant) {
+      const safeCurrentValue =
+        (selectedRestaurant.rating ? selectedRestaurant.rating : 0) / 2;
+      setValue(safeCurrentValue);
+    }
+  }, [selectedRestaurant]);
 
   return (
     <Box sx={{ width: 250, display: 'flex', alignItems: 'center' }}>
@@ -86,9 +87,12 @@ export const StarRating = () => {
         precision={0.5}
         getLabelText={getStarLabelText}
         onChange={(_, newValue) => {
-          let safeNewValue = newValue ? (newValue * 2) : null;
+          let safeNewValue = newValue ? newValue * 2 : null;
           if (selectedRestaurant) {
-            selectedRestaurantUpdate.mutate({...selectedRestaurant, rating: safeNewValue});
+            selectedRestaurantUpdate.mutate({
+              ...selectedRestaurant,
+              rating: safeNewValue,
+            });
           }
           setValue(newValue);
         }}
@@ -102,27 +106,29 @@ export const StarRating = () => {
       )}
     </Box>
   );
-}
-
+};
 
 export const CostRating = () => {
-    const { isPending, isError, error, selectedRestaurant } = useSelectedRestaurant();
-    const selectedRestaurantUpdate = useUpdateSelectedRestaurant();
+  const { isPending, isError, error, selectedRestaurant } =
+    useSelectedRestaurant();
+  const selectedRestaurantUpdate = useUpdateSelectedRestaurant();
 
-    // Pending and Error states (not implemented)
-    if (isPending) console.log("Loading...");
-    if (isError) console.error(`Error: ${error}`);
+  // Pending and Error states (not implemented)
+  if (isPending) console.log('Loading...');
+  if (isError) console.error(`Error: ${error}`);
 
-    const [value, setValue] = useState<number | null>(null);
-    const [hover, setHover] = useState(-1);
+  const [value, setValue] = useState<number | null>(null);
+  const [hover, setHover] = useState(-1);
 
-    // Initialize the rating
-    useEffect(() => {
-      if (selectedRestaurant) {
-        const safeCurrentValue = (selectedRestaurant.price_range ? selectedRestaurant.price_range : 0);
-        setValue(safeCurrentValue)
-      }
-    }, [selectedRestaurant])
+  // Initialize the rating
+  useEffect(() => {
+    if (selectedRestaurant) {
+      const safeCurrentValue = selectedRestaurant.price_range
+        ? selectedRestaurant.price_range
+        : 0;
+      setValue(safeCurrentValue);
+    }
+  }, [selectedRestaurant]);
 
   return (
     <Box sx={{ width: 250, display: 'flex', alignItems: 'center' }}>
@@ -134,7 +140,10 @@ export const CostRating = () => {
         onChange={(_, newValue) => {
           let safeNewValue = newValue ? newValue : null;
           if (selectedRestaurant) {
-            selectedRestaurantUpdate.mutate({...selectedRestaurant, price_range: safeNewValue});
+            selectedRestaurantUpdate.mutate({
+              ...selectedRestaurant,
+              price_range: safeNewValue,
+            });
           }
           setValue(newValue);
         }}
@@ -145,8 +154,10 @@ export const CostRating = () => {
         icon={<CostIcon fontSize="inherit" />}
       />
       {value !== null && (
-        <Box sx={{ ml: 2 }}>{COST_LABELS[hover !== -1 ? hover : (value ?? 0)]}</Box>
+        <Box sx={{ ml: 2 }}>
+          {COST_LABELS[hover !== -1 ? hover : (value ?? 0)]}
+        </Box>
       )}
     </Box>
   );
-}
+};

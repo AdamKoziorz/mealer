@@ -1,5 +1,5 @@
-export { UserRestaurantAPI } from './api'
+export { UserRestaurantAPI } from './api';
 
-export type { UserRestaurant } from './api'
+export type { UserRestaurant } from './api';
 
-export { useUserRestaurants } from './hooks'
+export { useUserRestaurants } from './hooks';

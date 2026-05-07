@@ -1,30 +1,45 @@
-import "./map.css";
+import './map.css';
 
-import { useEffect, useRef, useMemo } from "react";
-import { createPortal } from "react-dom";
-import { createRoot } from "react-dom/client";
+import { useEffect, useRef, useMemo } from 'react';
+import { createPortal } from 'react-dom';
+import { createRoot } from 'react-dom/client';
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery } from '@tanstack/react-query';
 
-import maplibregl from "maplibre-gl";
-import type { UUID } from "crypto";
+import maplibregl from 'maplibre-gl';
+import type { UUID } from 'crypto';
 
-import MarkerIcon from "@mui/icons-material/Room";
+import MarkerIcon from '@mui/icons-material/Room';
 
-import { UserRestaurantAPI } from "@entities/restaurant";
-import { useRMStore } from "@features/manage-restaurants/hooks";
-import { AddRestaurantPopUp, MoveRestaurantPopUp } from "@features/manage-restaurants/ui";
-import { fetchMe } from "@entities/user/api";
+import { UserRestaurantAPI } from '@entities/restaurant';
+import { useRMStore } from '@features/manage-restaurants/hooks';
+import {
+  AddRestaurantPopUp,
+  MoveRestaurantPopUp,
+} from '@features/manage-restaurants/ui';
+import { fetchMe } from '@entities/user/api';
 
+type RestaurantMapProps = {
+  isMobile: boolean;
+  mobileSheetExpandedHeightPx: number;
+  mobileSheetCollapsedHeightPx: number;
+};
 
 // This widget allows users to view their restaurants on a map
-export const RestaurantMap = () => {
+export const RestaurantMap = ({
+  isMobile,
+  mobileSheetExpandedHeightPx,
+  mobileSheetCollapsedHeightPx,
+}: RestaurantMapProps) => {
   const { isPending, isError, data, error } = useQuery({
-    queryKey: ["userRestaurants"],
+    queryKey: ['userRestaurants'],
     queryFn: UserRestaurantAPI.get,
   });
 
-  const { data: current_user_id } = useQuery({queryKey: ["me"], queryFn: fetchMe});
+  const { data: current_user_id } = useQuery({
+    queryKey: ['me'],
+    queryFn: fetchMe,
+  });
 
   // Ref to track current user
   const authenticatedUser = useRef(current_user_id);
@@ -33,6 +48,9 @@ export const RestaurantMap = () => {
   const mapContainer = useRef<HTMLDivElement | null>(null);
   const map = useRef<maplibregl.Map | null>(null);
   const markers = useRef<Map<UUID, maplibregl.Marker>>(new Map());
+  const isMobileRef = useRef(isMobile);
+  const expandedHeightRef = useRef(mobileSheetExpandedHeightPx);
+  const collapsedHeightRef = useRef(mobileSheetCollapsedHeightPx);
 
   // Slices of our RMStore that may trigger rerenders
   const context = useRMStore((s) => s.context);
@@ -42,13 +60,58 @@ export const RestaurantMap = () => {
   const dragStart = useRMStore((s) => s.dragStart);
   const dispatch = useRMStore((s) => s.dispatch);
 
-
   // Simple useeffect to track the current user. Should be null
   // if unauthenticated
   useEffect(() => {
     authenticatedUser.current = current_user_id;
   }, [current_user_id]);
 
+  useEffect(() => {
+    isMobileRef.current = isMobile;
+    expandedHeightRef.current = mobileSheetExpandedHeightPx;
+    collapsedHeightRef.current = mobileSheetCollapsedHeightPx;
+  }, [isMobile, mobileSheetExpandedHeightPx, mobileSheetCollapsedHeightPx]);
+
+  const focusLngLatInVisibleMap = ({
+    lngLat,
+    zoom,
+    bottomOcclusionPx,
+    topPaddingPx = 24,
+  }: {
+    lngLat: maplibregl.LngLatLike;
+    zoom?: number;
+    bottomOcclusionPx: number;
+    topPaddingPx?: number;
+  }) => {
+    if (!map.current) return;
+
+    map.current.easeTo({
+      center: lngLat,
+      zoom,
+      padding: {
+        // Focus points relative to the visible map area instead of the full viewport.
+        top: topPaddingPx,
+        right: 24,
+        bottom: bottomOcclusionPx + 24,
+        left: 24,
+      },
+      essential: true,
+    });
+  };
+
+  const focusAddPopupOnMobile = (lngLat: maplibregl.LngLat) => {
+    if (!map.current) return;
+
+    const targetZoom = Math.min(map.current.getZoom(), 16);
+
+    // Add flow assumes the sheet has collapsed, so we reserve only the collapsed peek.
+    focusLngLatInVisibleMap({
+      lngLat,
+      zoom: targetZoom,
+      bottomOcclusionPx: collapsedHeightRef.current,
+      topPaddingPx: 160,
+    });
+  };
 
   // This effect is responsible for initializing the map, including
   // the pop up effect for when the user wants to add a restaurant
@@ -59,13 +122,16 @@ export const RestaurantMap = () => {
 
     const mapInstance = new maplibregl.Map({
       container: mapContainer.current,
-      style: "https://tiles.openfreemap.org/styles/bright",
+      style: 'https://tiles.openfreemap.org/styles/bright',
       center: [-78.83, 43.9],
       zoom: 9.5,
       attributionControl: false,
     });
 
-    mapInstance.addControl(new maplibregl.AttributionControl({ compact: true }), "top-right");
+    mapInstance.addControl(
+      new maplibregl.AttributionControl({ compact: true }),
+      'top-right'
+    );
 
     map.current = mapInstance;
 
@@ -73,14 +139,13 @@ export const RestaurantMap = () => {
     // context that the user is in to determine what context to switch
     // to, updating the UI accordingly
     const handleMapClick = (e: maplibregl.MapMouseEvent & Object) => {
-
       // If the user is not authenticated, we do not allow interactions
       // with the map
       if (!authenticatedUser.current) {
         e.originalEvent.stopPropagation();
         return;
       }
-      
+
       // Get the current state and context that we are in
       const currentState = useRMStore.getState();
 
@@ -90,66 +155,67 @@ export const RestaurantMap = () => {
         // If we are in an idle state, then the user "intends" to add a
         // restaurant to the map by clicking on it.
         case 'rm/set-idle':
-          const popupNode = document.createElement("div");
+          const popupNode = document.createElement('div');
 
-          const popup = new maplibregl.Popup(
-            { 
-              maxWidth: "none",
-              className: "popup"
-            }
-          ) .setLngLat(e.lngLat)
+          const popup = new maplibregl.Popup({
+            maxWidth: 'none',
+            className: 'popup',
+          })
+            .setLngLat(e.lngLat)
             .setDOMContent(popupNode)
             .addTo(map.current!);
 
           // Switch contexts to 'click-empty-to-add'
           dispatch({
-            type: "rm/click-empty-to-add",
+            type: 'rm/click-empty-to-add',
             clickLocation: e.lngLat,
-            activeMapPopup: { element: popupNode, instance: popup},
-          })
+            activeMapPopup: { element: popupNode, instance: popup },
+          });
+
+          if (isMobileRef.current) {
+            focusAddPopupOnMobile(e.lngLat);
+          }
           break;
 
         // If the user is dragging yet has decided to click the map,
         // then we will set to idle. Note that the "diff" in the
         // next useEffect() will take care of the unsaved location
         case 'rm/moving-restaurant':
-          dispatch({ type: "rm/set-idle" });
+          dispatch({ type: 'rm/set-idle' });
           break;
 
         // We remove the pop up in this context to enable "toggling"
         case 'rm/click-empty-to-add':
           currentState.activeMapPopup?.instance.remove();
-          dispatch({ type: "rm/set-idle" });
+          dispatch({ type: 'rm/set-idle' });
           break;
-        
+
         // We go to idle if the user clicks on the map while selecting
         // a restaurant
         case 'rm/select-restaurant':
-          dispatch({ type: "rm/set-idle" });
+          dispatch({ type: 'rm/set-idle' });
           break;
       }
     };
 
-    mapInstance.on("click", handleMapClick);
+    mapInstance.on('click', handleMapClick);
 
     // Cleaning up the map and its markers on unmount
     return () => {
-      mapInstance.off("click", handleMapClick);
+      mapInstance.off('click', handleMapClick);
       mapInstance.remove();
       map.current = null;
       markers.current.forEach((m) => {
         const clickHandler = (m as any).clickHandler;
         if (clickHandler) {
-          m.getElement().removeEventListener("click", clickHandler);
+          m.getElement().removeEventListener('click', clickHandler);
         }
-        m.remove()
+        m.remove();
       });
       markers.current.clear();
     };
   }, []);
 
-
-  
   // This effect is responsible for managing the markers that are
   // visualized on the map, including their creation and deletion.
   // Whenever the data (userRestaurants) changes, the markers are
@@ -162,7 +228,8 @@ export const RestaurantMap = () => {
       // User logged out → remove all markers
       markers.current.forEach((m) => {
         const clickHandler = (m as any).clickHandler;
-        if (clickHandler) m.getElement().removeEventListener("click", clickHandler);
+        if (clickHandler)
+          m.getElement().removeEventListener('click', clickHandler);
         m.remove();
       });
       markers.current.clear();
@@ -172,14 +239,14 @@ export const RestaurantMap = () => {
     if (!data) return;
 
     const currentMarkers = markers.current;
-    const newDataIDs = new Set(data.map(r => r.user_restaurant_id));
+    const newDataIDs = new Set(data.map((r) => r.user_restaurant_id));
 
     // Delete stale markers and clean up their listeners
     for (const [id, marker] of currentMarkers) {
       if (!newDataIDs.has(id)) {
         const clickHandler = (marker as any).clickHandler;
         if (clickHandler) {
-          marker.getElement().removeEventListener("click", clickHandler);
+          marker.getElement().removeEventListener('click', clickHandler);
         }
         marker.remove();
         currentMarkers.delete(id);
@@ -196,41 +263,41 @@ export const RestaurantMap = () => {
 
         // If the location has changed, then we need to reset the
         // location of the marker
-        if ((lngLat.lng !== restaurant.longitude) || 
-            (lngLat.lat !== restaurant.latitude)) {
-          
+        if (
+          lngLat.lng !== restaurant.longitude ||
+          lngLat.lat !== restaurant.latitude
+        ) {
           existing.setLngLat([restaurant.longitude, restaurant.latitude]);
         }
 
-      // We will need to create a new marker and set up an event
-      // handler for when somebody clicks on the marker, which should
-      // take the user to the "select-restaurant" context.
+        // We will need to create a new marker and set up an event
+        // handler for when somebody clicks on the marker, which should
+        // take the user to the "select-restaurant" context.
       } else {
-
-        const markerDiv = document.createElement("div");
+        const markerDiv = document.createElement('div');
         const markerRoot = createRoot(markerDiv);
 
         markerRoot.render(
           <div className="!flex !flex-col !items-center">
-            <div className="!label text-black !bg-red-50 !py-2 !px-4
-            rounded shadow font-sans font-normal leading-snug">
+            <div
+              className="!label text-black !bg-red-50 !py-2 !px-4
+            rounded shadow font-sans font-normal leading-snug"
+            >
               {restaurant.name}
             </div>
-            <MarkerIcon 
+            <MarkerIcon
               className="!w-12 !h-12 !align-center !justify-center"
-              sx={{ color: "red" }}
+              sx={{ color: 'red' }}
             />
           </div>
         );
 
-        const marker = new maplibregl.Marker(
-          { element: markerDiv,
-            anchor: 'bottom'}
-          )
+        const marker = new maplibregl.Marker({
+          element: markerDiv,
+          anchor: 'bottom',
+        })
           .setLngLat([restaurant.longitude, restaurant.latitude])
           .addTo(map.current!);
-
-
 
         // When the user clicks on the marker, we will evaluate the current
         // context that the user is in to determine what context to switch
@@ -242,7 +309,6 @@ export const RestaurantMap = () => {
           const markerLngLat = marker.getLngLat();
 
           switch (currentState.context) {
-
             // If we are in a moving state, we do not do anything.
             case 'rm/moving-restaurant':
               break;
@@ -250,28 +316,37 @@ export const RestaurantMap = () => {
             // If the user is currently adding a restaurant, yet has
             // clicked a marker, then we are going to clear the
             // current popup and continue
-            // 
+            //
             // @ts-ignore This is supposed to be a fallthrough case
             case 'rm/click-empty-to-add':
-              currentState.activeMapPopup?.instance.remove()
+              currentState.activeMapPopup?.instance.remove();
 
             default:
               dispatch({
-                type: "rm/select-restaurant",
+                type: 'rm/select-restaurant',
                 selectedRestaurant: restaurant.user_restaurant_id,
-                clickLocation: markerLngLat
+                clickLocation: markerLngLat,
               });
 
               const zoomLevel = Math.max(18, map.current!.getZoom());
-              map.current?.flyTo({
-                center: markerLngLat,
-                zoom: zoomLevel,
-                essential: true
-              });
-            }
+              if (isMobileRef.current) {
+                // Marker selection assumes the expanded sheet because details open immediately.
+                focusLngLatInVisibleMap({
+                  lngLat: markerLngLat,
+                  zoom: zoomLevel,
+                  bottomOcclusionPx: expandedHeightRef.current,
+                });
+              } else {
+                map.current?.flyTo({
+                  center: markerLngLat,
+                  zoom: zoomLevel,
+                  essential: true,
+                });
+              }
+          }
         };
 
-        marker.getElement().addEventListener("click", handleMarkerClick);
+        marker.getElement().addEventListener('click', handleMarkerClick);
         currentMarkers.set(restaurant.user_restaurant_id, marker);
       }
     });
@@ -279,15 +354,10 @@ export const RestaurantMap = () => {
     return;
   }, [data, current_user_id, context]);
 
-
-
-
-
   // This effect is responsible for managing the dragging of the
   // currently selected restaurant's marker. This really only
   // applies when the user is in the moving restaurant state.
   useEffect(() => {
-  
     // Ensure the selected marker, restaurant, and map exists
     if (!map.current || !selectedRestaurant) return;
     const restaurantMarker = markers.current.get(selectedRestaurant!);
@@ -296,17 +366,16 @@ export const RestaurantMap = () => {
     // We only enable draggable and set up the moving restaurant
     // popup when user intentionally clicked move restaurant on
     // the dashboard
-    if (context === "rm/moving-restaurant") {
-
+    if (context === 'rm/moving-restaurant') {
       restaurantMarker.setDraggable(true);
 
-      const popupNode = document.createElement("div");
+      const popupNode = document.createElement('div');
 
-      const popup = new maplibregl.Popup(
-        { maxWidth: "none",
-          className: "popup-move",
-          anchor: "top"
-        })
+      const popup = new maplibregl.Popup({
+        maxWidth: 'none',
+        className: 'popup-move',
+        anchor: 'top',
+      })
         .setLngLat(restaurantMarker.getLngLat())
         .setDOMContent(popupNode)
         .addTo(map.current!);
@@ -314,11 +383,12 @@ export const RestaurantMap = () => {
       // We "re-dispatch" to include the new popup, since the original
       // dispatcher does not have access to the active popup. Is there a way
       // to prevent us from having to do this?
-      dispatch({ type: "rm/moving-restaurant",
-          dragLocation: clickLocation,
-          clickLocation: clickLocation,
-          dragStart: clickLocation,
-          activeMapPopup: { element: popupNode, instance: popup}
+      dispatch({
+        type: 'rm/moving-restaurant',
+        dragLocation: clickLocation,
+        clickLocation: clickLocation,
+        dragStart: clickLocation,
+        activeMapPopup: { element: popupNode, instance: popup },
       });
 
       // We regularly update the location of the active popup within
@@ -327,20 +397,21 @@ export const RestaurantMap = () => {
         const newLngLat = restaurantMarker.getLngLat();
         popup.setLngLat(newLngLat);
 
-        dispatch({ type: "rm/moving-restaurant",
-            dragLocation: newLngLat,
-            clickLocation: clickLocation,
-            dragStart: dragStart,
-            activeMapPopup: { element: popupNode, instance: popup}
+        dispatch({
+          type: 'rm/moving-restaurant',
+          dragLocation: newLngLat,
+          clickLocation: clickLocation,
+          dragStart: dragStart,
+          activeMapPopup: { element: popupNode, instance: popup },
         });
       };
 
-      restaurantMarker.on("drag", handleRestaurantDrag);
+      restaurantMarker.on('drag', handleRestaurantDrag);
 
       // Cleanup - get rid of the drag listeners and popup, and
       // reset dragging state back to normal
       return () => {
-        restaurantMarker.off("drag", handleRestaurantDrag);
+        restaurantMarker.off('drag', handleRestaurantDrag);
         restaurantMarker.setDraggable(false);
 
         const currentState = useRMStore.getState();
@@ -351,31 +422,24 @@ export const RestaurantMap = () => {
     }
 
     return;
-  
   }, [context, selectedRestaurant]);
 
-
-
-
-
-  // Whenever the user's context changes, we will determine the 
+  // Whenever the user's context changes, we will determine the
   // popup to be displayed through createPortal accordingly
   const clickPopUp = useMemo(() => {
     switch (context) {
-      case "rm/click-empty-to-add":
+      case 'rm/click-empty-to-add':
         return <AddRestaurantPopUp />;
-      case "rm/moving-restaurant":
+      case 'rm/moving-restaurant':
         return <MoveRestaurantPopUp />;
       default:
         return null;
     }
   }, [context, activeMapPopup]);
 
-
   // Pending and Error states (not implemented)
-  if (isPending) console.log("Loading...");
+  if (isPending) console.log('Loading...');
   if (isError) console.error(`Error: ${error}`);
-
 
   // Our map is a div with its ref set to the mapContainer, with
   // a restaurant popup inside of it that appears if the popup state
@@ -386,11 +450,9 @@ export const RestaurantMap = () => {
   // directly to the DOM
   return (
     <div ref={mapContainer} className="w-full h-full">
-      {
-        activeMapPopup &&
+      {activeMapPopup &&
         activeMapPopup.element &&
-        createPortal(clickPopUp, activeMapPopup.element)
-      }
+        createPortal(clickPopUp, activeMapPopup.element)}
     </div>
   );
 };

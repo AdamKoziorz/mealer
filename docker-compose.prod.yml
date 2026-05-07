@@ -17,7 +17,7 @@ services:
       - ./apps/backend/src/models/init.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -52,8 +52,8 @@ services:
         VITE_API_URL: ${VITE_API_URL}
     container_name: mealer-nginx
     ports:
-      - "80:80"
-      - "443:443"
+      - '80:80'
+      - '443:443'
     volumes:
       - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:

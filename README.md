@@ -10,8 +10,8 @@
 
 ## (Expected) Tech Stack
 
-- **Frontend**: React, TypeScript, Tailwind, Vite  
-- **Backend**: Express, PostgreSQL, Prisma 
+- **Frontend**: React, TypeScript, Tailwind, Vite
+- **Backend**: Express, PostgreSQL, Prisma
 - **Authentication**: Passport.js
 - **Testing**: Playwright
 

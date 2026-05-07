@@ -1,7 +1,11 @@
-import { CodeChallengeMethod, OAuth2Client } from "google-auth-library";
-import type { AuthRepository, PendingOAuthRepository, SessionRepository } from "./auth.repository.js";
+import { CodeChallengeMethod, OAuth2Client } from 'google-auth-library';
+import type {
+  AuthRepository,
+  PendingOAuthRepository,
+  SessionRepository,
+} from './auth.repository.js';
 
-import { env } from "../../config/env.js"
+import { env } from '../../config/env.js';
 
 import {
   randomHex,
@@ -9,7 +13,7 @@ import {
   sha256Base64Url,
   sha256Hex,
   secureEqual,
-} from "./auth.utils.js"
+} from './auth.utils.js';
 
 export interface AuthenticatedUser {
   user_id: string;
@@ -20,7 +24,6 @@ const googleClient = new OAuth2Client(
   env.googleClientSecret,
   `${env.backendOrigin}/auth/google/callback`
 );
-
 
 export class AuthService {
   constructor(
@@ -43,8 +46,8 @@ export class AuthService {
       scope: ['openid', 'email', 'profile'],
       state,
       code_challenge: codeChallenge,
-      code_challenge_method: CodeChallengeMethod.S256
-    })
+      code_challenge_method: CodeChallengeMethod.S256,
+    });
 
     await this.pendingOAuthRepo.storePendingAuth(
       stateHash,
@@ -55,40 +58,42 @@ export class AuthService {
     return { url, state };
   }
 
-
   async handleGoogleCallback(params: {
-    code?: string,
-    receivedState?: string,
-    expectedState?: string,
+    code?: string;
+    receivedState?: string;
+    expectedState?: string;
   }): Promise<{ user: AuthenticatedUser; sessionToken: string }> {
-
     const { code, receivedState, expectedState } = params;
 
-    if (!code) throw new Error("Missing OAuth code");
-    if (!receivedState || !expectedState) throw new Error("Missing OAuth state");
-    if (!secureEqual(receivedState, expectedState)) throw new Error("Invalid OAuth state");
+    if (!code) throw new Error('Missing OAuth code');
+    if (!receivedState || !expectedState)
+      throw new Error('Missing OAuth state');
+    if (!secureEqual(receivedState, expectedState))
+      throw new Error('Invalid OAuth state');
 
     // Atomically consume the pending auth record - also validates state and TTL.
-    const codeVerifier = await this.pendingOAuthRepo.consumePendingAuth(sha256Hex(receivedState));
-    if (!codeVerifier) throw new Error("Invalid or expired OAuth state");
+    const codeVerifier = await this.pendingOAuthRepo.consumePendingAuth(
+      sha256Hex(receivedState)
+    );
+    if (!codeVerifier) throw new Error('Invalid or expired OAuth state');
 
     // RFC 7636 - Client sends auth code and code verifier to token endpoint.
     const { tokens } = await googleClient.getToken({
       code,
       codeVerifier,
-      redirect_uri: `${env.backendOrigin}/auth/google/callback`
+      redirect_uri: `${env.backendOrigin}/auth/google/callback`,
     });
 
-    if (!tokens.id_token) throw new Error("No ID token returned");
+    if (!tokens.id_token) throw new Error('No ID token returned');
 
     const ticket = await googleClient.verifyIdToken({
       idToken: tokens.id_token,
-      audience: env.googleClientId
-    })
+      audience: env.googleClientId,
+    });
 
     const payload = ticket.getPayload();
     if (!payload?.sub || !payload.email || payload.email_verified !== true) {
-      throw new Error("Invalid Google identity payload");
+      throw new Error('Invalid Google identity payload');
     }
 
     const user = await this.findOrCreateUserFromGoogle(payload);
@@ -97,10 +102,13 @@ export class AuthService {
     return { user, sessionToken };
   }
 
-
-
-  private async findOrCreateUserFromGoogle(payload: any): Promise<AuthenticatedUser> {
-    const existingOAuth = await this.authRepo.findByProvider('google', payload.sub);
+  private async findOrCreateUserFromGoogle(
+    payload: any
+  ): Promise<AuthenticatedUser> {
+    const existingOAuth = await this.authRepo.findByProvider(
+      'google',
+      payload.sub
+    );
 
     if (existingOAuth) {
       return { user_id: existingOAuth.user_id };
@@ -109,12 +117,16 @@ export class AuthService {
     try {
       return await this.authRepo.createUser(
         { email: payload.email },
-        { provider: 'google', provider_user_id: payload.sub, email: payload.email }
+        {
+          provider: 'google',
+          provider_user_id: payload.sub,
+          email: payload.email,
+        }
       );
     } catch {
       const retry = await this.authRepo.findByProvider('google', payload.sub);
       if (retry) return { user_id: retry.user_id };
-      throw new Error('Failed to create user account')
+      throw new Error('Failed to create user account');
     }
   }
 

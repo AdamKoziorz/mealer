@@ -5,7 +5,7 @@ import {
   Chip,
   TextField,
   Autocomplete,
-  IconButton
+  IconButton,
 } from '@mui/material';
 
 import AddIcon from '@mui/icons-material/Add';
@@ -29,12 +29,10 @@ interface TagListProps {
 const rootTextStyle = {
   fontFamily: 'system-ui, Avenir, Helvetica, Arial, sans-serif',
   fontWeight: 400,
-  lineHeight: 1.5
+  lineHeight: 1.5,
 };
 
-
-
-// A TagList is a container of tags (chips) that represent 
+// A TagList is a container of tags (chips) that represent
 // any specific data relating to a restaurant that is stored
 // as an array
 //
@@ -47,9 +45,8 @@ export const TagList: React.FC<TagListProps> = ({
   localTags,
   setLocalTags,
   globalTags,
-  setGlobalTags
+  setGlobalTags,
 }) => {
-
   const [isAdding, setIsAdding] = useState(false);
   const [inputValue, setInputValue] = useState('');
 
@@ -59,11 +56,11 @@ export const TagList: React.FC<TagListProps> = ({
     const tag: Tag = { label: tagLabel.trim() };
     if (!tag.label) return;
 
-    if (!globalTags.find(t => t.label === tag.label)) {
+    if (!globalTags.find((t) => t.label === tag.label)) {
       setGlobalTags([...globalTags, tag]);
     }
 
-    if (!localTags.find(t => t.label === tag.label)) {
+    if (!localTags.find((t) => t.label === tag.label)) {
       setLocalTags([...localTags, tag]);
     }
 
@@ -74,17 +71,18 @@ export const TagList: React.FC<TagListProps> = ({
   // When we delete a local tag, the parent component will know to
   // rerender the component with a new global tag list
   const deleteLocalTag = (tag: Tag) => {
-    setLocalTags(localTags.filter(t => t.label !== tag.label));
+    setLocalTags(localTags.filter((t) => t.label !== tag.label));
   };
 
   return (
-    <Stack 
+    <Stack
       direction="row"
       spacing={1}
       alignItems="center"
       flexWrap="wrap"
       useFlexGap
-      sx={rootTextStyle}>
+      sx={rootTextStyle}
+    >
       {localTags.map((tag, index) => (
         <Chip
           key={index}
@@ -97,9 +95,13 @@ export const TagList: React.FC<TagListProps> = ({
       {isAdding ? (
         <Autocomplete
           freeSolo
-          options={[... new Set(globalTags
-            .map(t => t.label)
-            .filter(label => !localTags.find(t => t.label === label)))]}
+          options={[
+            ...new Set(
+              globalTags
+                .map((t) => t.label)
+                .filter((label) => !localTags.find((t) => t.label === label))
+            ),
+          ]}
           inputValue={inputValue}
           onInputChange={(_, value) => setInputValue(value)}
           onChange={(_, value) => {
@@ -107,7 +109,8 @@ export const TagList: React.FC<TagListProps> = ({
           }}
           disablePortal
           sx={{
-            '& + .MuiAutocomplete-popper .MuiAutocomplete-option': rootTextStyle
+            '& + .MuiAutocomplete-popper .MuiAutocomplete-option':
+              rootTextStyle,
           }}
           renderInput={(params) => (
             <Stack direction="row" alignItems="center" spacing={0.5}>
@@ -127,7 +130,7 @@ export const TagList: React.FC<TagListProps> = ({
                 autoFocus
                 sx={{
                   minWidth: 120,
-                  '& input': rootTextStyle
+                  '& input': rootTextStyle,
                 }}
               />
               <IconButton

@@ -1,8 +1,8 @@
-import globals from 'globals'
-import reactHooks from 'eslint-plugin-react-hooks'
-import reactRefresh from 'eslint-plugin-react-refresh'
-import tseslint from 'typescript-eslint'
-import importPlugin from 'eslint-plugin-import'
+import globals from 'globals';
+import reactHooks from 'eslint-plugin-react-hooks';
+import reactRefresh from 'eslint-plugin-react-refresh';
+import tseslint from 'typescript-eslint';
+import importPlugin from 'eslint-plugin-import';
 
 export default tseslint.config(
   { ignores: ['dist'] },
@@ -10,13 +10,13 @@ export default tseslint.config(
     settings: {
       'import/resolver': {
         typescript: {
-          project: './tsconfig.app.json'
-        }
-      }
+          project: './tsconfig.app.json',
+        },
+      },
     },
     extends: [
       importPlugin.flatConfigs.typescript,
-      ...tseslint.configs.recommendedTypeChecked
+      ...tseslint.configs.recommendedTypeChecked,
     ],
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
@@ -34,16 +34,32 @@ export default tseslint.config(
         { allowConstantExport: true },
       ],
       'import/no-restricted-paths': [
-        'error', {
+        'error',
+        {
           zones: [
-            { target: 'src/shared', from: ['src/entities', 'src/features', 'src/widgets', 'src/pages', 'src/app']},
-            { target: 'src/entities', from: ['src/features', 'src/widgets', 'src/pages', 'src/app']},
-            { target: 'src/features', from: ['src/widgets', 'src/pages', 'src/app']},
-            { target: 'src/widgets', from: ['src/pages', 'src/app']},
-            { target: 'src/pages', from: ['src/app']},
-          ]
-        }
-      ]
+            {
+              target: 'src/shared',
+              from: [
+                'src/entities',
+                'src/features',
+                'src/widgets',
+                'src/pages',
+                'src/app',
+              ],
+            },
+            {
+              target: 'src/entities',
+              from: ['src/features', 'src/widgets', 'src/pages', 'src/app'],
+            },
+            {
+              target: 'src/features',
+              from: ['src/widgets', 'src/pages', 'src/app'],
+            },
+            { target: 'src/widgets', from: ['src/pages', 'src/app'] },
+            { target: 'src/pages', from: ['src/app'] },
+          ],
+        },
+      ],
     },
-  },
-)
+  }
+);

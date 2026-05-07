@@ -1,9 +1,7 @@
-import type { NewRestaurant, ChangeRestaurant } from '../../models/types.js'
-import { RestaurantRepository } from './restaurants.repository.js'
-import { AppError } from '../../middleware/errorHandler.js'
-import type { UUID } from 'crypto'
-
-
+import type { NewRestaurant, ChangeRestaurant } from '../../models/types.js';
+import { RestaurantRepository } from './restaurants.repository.js';
+import { AppError } from '../../middleware/errorHandler.js';
+import type { UUID } from 'crypto';
 
 export class RestaurantService {
   constructor(private restaurantRepo: RestaurantRepository) {}
@@ -11,7 +9,10 @@ export class RestaurantService {
   // Helper functions for validation
   private validateLocation(latitude?: number, longitude?: number) {
     if ((latitude === undefined) !== (longitude === undefined)) {
-      throw new AppError(400, 'Both latitude and longitude must be provided together');
+      throw new AppError(
+        400,
+        'Both latitude and longitude must be provided together'
+      );
     }
     if (latitude !== undefined && (latitude < -90 || latitude > 90)) {
       throw new AppError(400, 'Latitude must be between -90 and 90');
@@ -23,35 +24,33 @@ export class RestaurantService {
 
   private validateRating(rating: number | null) {
     if (rating !== null && (rating < 1 || rating > 10)) {
-      throw new AppError(400, 'Rating must be between 1 and 10')
+      throw new AppError(400, 'Rating must be between 1 and 10');
     }
   }
 
   private validatePriceRange(price_range: number | null) {
     if (price_range !== null && (price_range < 1 || price_range > 5)) {
-      throw new AppError(400, 'Price range must be between 1 and 5')
+      throw new AppError(400, 'Price range must be between 1 and 5');
     }
   }
 
-
-
   async getUserRestaurants(userId: UUID) {
-    const restaurants = await this.restaurantRepo.findByUserId(userId)
-    return restaurants
+    const restaurants = await this.restaurantRepo.findByUserId(userId);
+    return restaurants;
   }
 
   async getRestaurantById(restaurantId: UUID, userId: UUID) {
-    const restaurant = await this.restaurantRepo.findById(restaurantId, userId)
-    if (!restaurant) throw new AppError(404, 'Restaurant not found')
-    return restaurant
+    const restaurant = await this.restaurantRepo.findById(restaurantId, userId);
+    if (!restaurant) throw new AppError(404, 'Restaurant not found');
+    return restaurant;
   }
 
   async createRestaurant(data: NewRestaurant) {
-    this.validateLocation(data.latitude, data.longitude)
-    this.validatePriceRange(data.price_range!)
-    this.validateRating(data.rating!)
+    this.validateLocation(data.latitude, data.longitude);
+    this.validatePriceRange(data.price_range!);
+    this.validateRating(data.rating!);
 
-    return this.restaurantRepo.create(data)
+    return this.restaurantRepo.create(data);
   }
 
   async updateRestaurant(
@@ -59,18 +58,22 @@ export class RestaurantService {
     userId: UUID,
     data: ChangeRestaurant
   ) {
-    this.validateLocation(data.latitude, data.longitude)
-    this.validatePriceRange(data.price_range!)
-    this.validateRating(data.rating!)
+    this.validateLocation(data.latitude, data.longitude);
+    this.validatePriceRange(data.price_range!);
+    this.validateRating(data.rating!);
 
-    const updated = await this.restaurantRepo.update(restaurantId, userId, data)
-    if (!updated) throw new AppError(404, 'Restaurant not found')
-    return updated
+    const updated = await this.restaurantRepo.update(
+      restaurantId,
+      userId,
+      data
+    );
+    if (!updated) throw new AppError(404, 'Restaurant not found');
+    return updated;
   }
 
-
   async deleteRestaurant(restaurantId: UUID, userId: UUID) {
-    const deleted = await this.restaurantRepo.delete(restaurantId, userId)
-    if (deleted.numDeletedRows === BigInt(0)) throw new AppError(404, 'Restaurant not found')
+    const deleted = await this.restaurantRepo.delete(restaurantId, userId);
+    if (deleted.numDeletedRows === BigInt(0))
+      throw new AppError(404, 'Restaurant not found');
   }
 }

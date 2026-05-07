@@ -1,9 +1,9 @@
-export { useRMStore } from './useRMStore'
+export { useRMStore } from './useRMStore';
 
-export { 
-    useSelectedRestaurant,
-    useDeleteSelectedRestaurant,
-    useUpdateSelectedRestaurant
-} from './useSelectedRestaurant'
+export {
+  useSelectedRestaurant,
+  useDeleteSelectedRestaurant,
+  useUpdateSelectedRestaurant,
+} from './useSelectedRestaurant';
 
-export { useGlobalRestaurantTags } from './useGlobalRestaurantTags'
+export { useGlobalRestaurantTags } from './useGlobalRestaurantTags';

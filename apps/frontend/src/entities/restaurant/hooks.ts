@@ -1,9 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
-import { UserRestaurantAPI } from "@entities/restaurant";
+import { useQuery } from '@tanstack/react-query';
+import { UserRestaurantAPI } from '@entities/restaurant';
 
 export const useUserRestaurants = () => {
   return useQuery({
-    queryKey: ["userRestaurants"],
+    queryKey: ['userRestaurants'],
     queryFn: UserRestaurantAPI.get,
   });
 };

@@ -1,1 +1,1 @@
-export { RestaurantDashboard } from './dashboard'
+export { RestaurantDashboard } from './dashboard';

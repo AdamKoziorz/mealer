@@ -2,27 +2,27 @@
 
 // Wrapper to enforce environment variable presence
 function must(name: string): string {
-    const value = process.env[name];
-    if (!value) throw new Error(`Missing environment variable: ${name}`);
-    return value;
+  const value = process.env[name];
+  if (!value) throw new Error(`Missing environment variable: ${name}`);
+  return value;
 }
 
-const isProduction = process.env.NODE_ENV === "production";
+const isProduction = process.env.NODE_ENV === 'production';
 
 export const env = {
-    isProduction,
-    
-    expressPort: must("EXPRESS_PORT"),
+  isProduction,
 
-    frontendOrigin: must("FRONTEND_ORIGIN"),
-    backendOrigin: must("BACKEND_ORIGIN"),
+  expressPort: must('EXPRESS_PORT'),
 
-    googleClientId: must("GOOGLE_CLIENT_ID"),
-    googleClientSecret: must("GOOGLE_CLIENT_SECRET"),
+  frontendOrigin: must('FRONTEND_ORIGIN'),
+  backendOrigin: must('BACKEND_ORIGIN'),
 
-    // Reduce replay window with OAuth (RFC 6749, 6819)
-    oAuthStateTtlMs: 9 * 60 * 1000,
+  googleClientId: must('GOOGLE_CLIENT_ID'),
+  googleClientSecret: must('GOOGLE_CLIENT_SECRET'),
 
-    // How long the user can be logged in (We have 1 week)
-    sessionTtlMs: 7 * 24 * 60 * 60 * 1000
-}
+  // Reduce replay window with OAuth (RFC 6749, 6819)
+  oAuthStateTtlMs: 9 * 60 * 1000,
+
+  // How long the user can be logged in (We have 1 week)
+  sessionTtlMs: 7 * 24 * 60 * 60 * 1000,
+};
