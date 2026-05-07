@@ -5,7 +5,7 @@ import { RestaurantDashboard } from '@widgets/dashboard';
 
 import { useMobileRestaurantSheetSync } from './hooks';
 
-const MOBILE_SHEET_PEEK = 72;
+const MOBILE_SHEET_PEEK = 52;
 
 const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max);
@@ -173,12 +173,12 @@ const HomePage = () => {
       </section>
       <section
         aria-label="Restaurant Dashboard"
-        className="fixed inset-x-0 bottom-0 z-10 px-3 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] text-black sm:absolute sm:inset-auto sm:top-4 sm:left-4 sm:w-96 sm:px-0 sm:pb-0"
+        className="pointer-events-none fixed inset-x-0 bottom-0 z-10 px-3 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] text-black sm:absolute sm:inset-auto sm:top-4 sm:left-4 sm:w-96 sm:px-0 sm:pb-0"
       >
         <div className="sm:hidden">
           <div
             ref={sheetRef}
-            className={`flex h-[min(60dvh,34rem)] flex-col overflow-hidden rounded-t-[2rem] bg-red-50 shadow-[0_-10px_30px_rgba(0,0,0,0.14)] will-change-transform ${
+            className={`pointer-events-auto flex h-[min(60dvh,34rem)] flex-col overflow-hidden rounded-t-[2rem] bg-red-50 shadow-[0_-10px_30px_rgba(0,0,0,0.14)] will-change-transform ${
               dragOffset === null
                 ? 'transition-transform duration-200 ease-out'
                 : ''
@@ -192,16 +192,16 @@ const HomePage = () => {
               aria-expanded={drawerOpen}
               aria-controls="restaurant-dashboard-panel"
               aria-label={drawerOpen ? 'Collapse dashboard' : 'Open dashboard'}
-              className="flex w-full appearance-none justify-center border-0 bg-red-50 px-6 pb-4 pt-3 touch-none outline-none"
+              className="flex w-full appearance-none justify-center border-0 bg-red-50 px-6 pb-2 pt-2 touch-none outline-none"
               onClick={handleSheetClick}
               onPointerDown={handleSheetPointerDown}
               onPointerMove={handleSheetPointerMove}
               onPointerUp={handleSheetPointerEnd}
               onPointerCancel={handleSheetPointerCancel}
             >
-              <div className="flex flex-col items-center gap-3">
-                <div className="h-2 w-20 rounded-full bg-gray-500" />
-                <div className="h-5" aria-hidden="true" />
+              <div className="flex flex-col items-center gap-2">
+                <div className="h-1.5 w-16 rounded-full bg-gray-500" />
+                <div className="h-3" aria-hidden="true" />
               </div>
             </button>
             <div
@@ -212,7 +212,7 @@ const HomePage = () => {
             </div>
           </div>
         </div>
-        <div className="hidden sm:block">
+        <div className="pointer-events-auto hidden sm:block">
           <RestaurantDashboard />
         </div>
       </section>

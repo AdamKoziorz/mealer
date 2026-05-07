@@ -21,6 +21,7 @@ COPY --from=builder /app/apps/backend/node_modules ./apps/backend/node_modules
 COPY --from=builder /app/apps/backend/package.json ./apps/backend/package.json
 COPY --from=builder /app/apps/backend/dist ./apps/backend/dist
 COPY --from=builder /app/packages/schemas/package.json ./packages/schemas/package.json
+COPY --from=builder /app/packages/schemas/node_modules ./packages/schemas/node_modules
 COPY --from=builder /app/packages/schemas/dist ./packages/schemas/dist
 WORKDIR /app/apps/backend
 USER node
