@@ -1,55 +1,87 @@
-import { NextFunction, Request, Response } from 'express'
-import { AuthService } from './auth.service'
-import { SessionRepository } from './auth.repository';
-
-const VITE_PORT = process.env.VITE_PORT || 6789;
-const WEBSITE_URL = process.env.WEBSITE_URL
+import type { Request, Response } from 'express';
+import type { AuthService } from './auth.service.js';
+import { env } from '../../config/env.js';
+import { cookie } from '../../config/cookie.js';
 
 export class AuthController {
     constructor(
         private authService: AuthService
     ) {}
 
-  GoogleSignIn = async (req: Request, res: Response) => {
-    const url = this.authService.getGoogleAuthUrl();
+  GoogleSignIn = async (_req: Request, res: Response) => {
+    const { url, state } = await this.authService.createGoogleAuthRequest();
+
+    res.cookie(cookie.oAuthStateName, state, {
+        httpOnly: true,
+        secure: cookie.secure,
+        sameSite: cookie.sameSite,
+        path: cookie.path,
+        maxAge: env.oAuthStateTtlMs,
+    });
+
     res.redirect(url);
   }
 
-  GoogleCallback = async (req: Request, res: Response, next: NextFunction) => {
+
+  GoogleCallback = async (req: Request, res: Response) => {
     try {
-        const code = req.query.code as string | undefined;
-        const state = req.query.state as string | undefined;
+        const { sessionToken } = await this.authService.handleGoogleCallback({
+            code: req.query.code as string | undefined,
+            receivedState: req.query.state as string | undefined,
+            expectedState: req.cookies?.[cookie.oAuthStateName] as string | undefined,
+        })
 
-        if (!code || !state) {
-            return;
-        }
-
-        const { user, session_id } = await this.authService.handleGoogleCallback(code, state);
-
-        res.cookie("session_id", session_id, {
+        res.clearCookie(cookie.oAuthStateName, {
             httpOnly: true,
-            secure: false,        // FOR NOW...
-            sameSite: "lax",
-            maxAge: 7 * 24 * 60 * 60 * 1000,
+            sameSite: cookie.sameSite,
+            secure: cookie.secure,
+            path: cookie.path,
         });
 
-        res.redirect(`http://${WEBSITE_URL}:${VITE_PORT}`);
+        // Secure session cookie
+        res.cookie(cookie.sessionName, sessionToken, {
+            httpOnly: true,
+            secure: cookie.secure,
+            sameSite: cookie.sameSite,
+            path: cookie.path,
+            maxAge: env.sessionTtlMs,
+        });
+
+        res.redirect(env.frontendOrigin)
+
     } catch (err) {
-        res.redirect(`${WEBSITE_URL}:${VITE_PORT}/login?error=auth_failed`)
+
+        res.clearCookie(cookie.oAuthStateName, {
+            httpOnly: true,
+            sameSite: cookie.sameSite,
+            secure: cookie.secure,
+            path: cookie.path,
+        });
+
+        console.warn("Google auth callback failed", {
+            message: err instanceof Error ? err.message : String(err),
+            hasCode: Boolean(req.query.code),
+            hasReceivedState: Boolean(req.query.state),
+            hasExpectedState: Boolean(req.cookies?.[cookie.oAuthStateName]),
+        });
+
+        res.redirect(`${env.frontendOrigin}/?error=auth_failed`)
     }
   }
 
   LogOut = async (req: Request, res: Response) => {
-    const sessionId = req.cookies?.session_id;
-    if (sessionId) {
-        await this.authService.logout(sessionId);
-        res.clearCookie("session_id", {
+    const sessionToken = req.cookies?.[cookie.sessionName] as string | undefined;
+
+    if (sessionToken) {
+        await this.authService.logout(sessionToken);
+        res.clearCookie(cookie.sessionName, {
             httpOnly: true,
-            sameSite: "lax",
-            secure: false      // FOR NOW
-        });
+            sameSite: cookie.sameSite,
+            secure: cookie.secure,
+            path: cookie.path,
+            });
     }
 
-    res.redirect(`${process.env.FRONTEND_URL}:${VITE_PORT}`)
+    res.redirect(env.frontendOrigin);
   }
 }

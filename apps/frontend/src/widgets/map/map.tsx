@@ -62,7 +62,10 @@ export const RestaurantMap = () => {
       style: "https://tiles.openfreemap.org/styles/bright",
       center: [-78.83, 43.9],
       zoom: 9.5,
+      attributionControl: false,
     });
+
+    mapInstance.addControl(new maplibregl.AttributionControl({ compact: true }), "top-right");
 
     map.current = mapInstance;
 

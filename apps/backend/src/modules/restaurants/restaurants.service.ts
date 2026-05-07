@@ -1,6 +1,7 @@
-import { NewRestaurant } from '@/models/types'
-import { RestaurantRepository } from './restaurants.repository'
-import { UUID } from 'crypto'
+import type { NewRestaurant, ChangeRestaurant } from '../../models/types.js'
+import { RestaurantRepository } from './restaurants.repository.js'
+import { AppError } from '../../middleware/errorHandler.js'
+import type { UUID } from 'crypto'
 
 
 
@@ -10,31 +11,25 @@ export class RestaurantService {
   // Helper functions for validation
   private validateLocation(latitude?: number, longitude?: number) {
     if ((latitude === undefined) !== (longitude === undefined)) {
-      throw new Error('Both latitude and longitude must be provided together');
+      throw new AppError(400, 'Both latitude and longitude must be provided together');
     }
-    
-    if (latitude !== undefined) {
-      if (latitude < -90 || latitude > 90) {
-        throw new Error('Latitude must be between -90 and 90');
-      }
+    if (latitude !== undefined && (latitude < -90 || latitude > 90)) {
+      throw new AppError(400, 'Latitude must be between -90 and 90');
     }
-    
-    if (longitude !== undefined) {
-      if (longitude < -180 || longitude > 180) {
-        throw new Error('Longitude must be between -180 and 180');
-      }
+    if (longitude !== undefined && (longitude < -180 || longitude > 180)) {
+      throw new AppError(400, 'Longitude must be between -180 and 180');
     }
   }
 
   private validateRating(rating: number | null) {
-    if (rating && (rating < 1 || rating > 10)) {
-      throw new Error('Rating must be between 0 and 10')
+    if (rating !== null && (rating < 1 || rating > 10)) {
+      throw new AppError(400, 'Rating must be between 1 and 10')
     }
   }
 
   private validatePriceRange(price_range: number | null) {
-    if (price_range && (price_range < 1 || price_range > 5)) {
-      throw new Error('Price range must be between 1 and 5')
+    if (price_range !== null && (price_range < 1 || price_range > 5)) {
+      throw new AppError(400, 'Price range must be between 1 and 5')
     }
   }
 
@@ -47,9 +42,7 @@ export class RestaurantService {
 
   async getRestaurantById(restaurantId: UUID, userId: UUID) {
     const restaurant = await this.restaurantRepo.findById(restaurantId, userId)
-    if (!restaurant) {
-      throw new Error('Restaurant not found')
-    }
+    if (!restaurant) throw new AppError(404, 'Restaurant not found')
     return restaurant
   }
 
@@ -64,24 +57,20 @@ export class RestaurantService {
   async updateRestaurant(
     restaurantId: UUID,
     userId: UUID,
-    data: NewRestaurant
+    data: ChangeRestaurant
   ) {
     this.validateLocation(data.latitude, data.longitude)
     this.validatePriceRange(data.price_range!)
     this.validateRating(data.rating!)
 
     const updated = await this.restaurantRepo.update(restaurantId, userId, data)
-    if (!updated) {
-      throw new Error('Restaurant not found')
-    }
+    if (!updated) throw new AppError(404, 'Restaurant not found')
     return updated
   }
 
 
   async deleteRestaurant(restaurantId: UUID, userId: UUID) {
     const deleted = await this.restaurantRepo.delete(restaurantId, userId)
-    if (deleted.numDeletedRows === BigInt(0)) {
-      throw new Error('Restaurant not found or could not be deleted')
-    }
+    if (deleted.numDeletedRows === BigInt(0)) throw new AppError(404, 'Restaurant not found')
   }
 }

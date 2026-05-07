@@ -1,17 +1,19 @@
-import { Router, RequestHandler, Request, Response } from "express";
-import { AuthRepository, SessionRepository } from "./auth.repository";
-import { AuthService } from "./auth.service";
-import { AuthController } from "./auth.controller";
+import { Router } from "express";
+import { AuthRepository, PendingOAuthRepository, SessionRepository } from "./auth.repository.js";
+import { AuthService } from "./auth.service.js";
+import { AuthController } from "./auth.controller.js";
+import { authRateLimiter } from "../../config/rateLimiter.js";
 
-export const router = Router();
+export const router: Router = Router();
 
 const sessionRepo = new SessionRepository()
 const authRepo = new AuthRepository()
-const authService = new AuthService(authRepo, sessionRepo)
+const pendingOAuthRepo = new PendingOAuthRepository()
+const authService = new AuthService(authRepo, sessionRepo, pendingOAuthRepo)
 const authController = new AuthController(authService)
 
-router.get("/google", authController.GoogleSignIn)
-router.get("/google/callback", authController.GoogleCallback)
-router.post("/logout", authController.LogOut)
+router.get("/google", authRateLimiter, authController.GoogleSignIn)
+router.get("/google/callback", authRateLimiter, authController.GoogleCallback)
+router.post("/logout", authRateLimiter, authController.LogOut)
 
 export default router

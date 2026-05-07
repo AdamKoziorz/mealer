@@ -1,9 +1,17 @@
-import { db } from "@/models/database"
-import { ChangeRestaurant, NewRestaurant } from "@/models/types"
-import { UUID } from "crypto"
+import { db } from "../../models/database.js"
+import type { ChangeRestaurant, GeometryPoint, NewRestaurant } from "../../models/types.js"
+import type { UUID } from "crypto"
 import { sql } from "kysely"
 
 export class RestaurantRepository {
+  private toLocationSql(latitude?: number, longitude?: number) {
+    if (latitude === undefined || longitude === undefined) {
+      return undefined;
+    }
+
+    return sql<GeometryPoint>`ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326)::GEOGRAPHY`;
+  }
+
   async findByUserId(userId: UUID) {
     return db
       .selectFrom('user_restaurants')
@@ -51,21 +59,17 @@ export class RestaurantRepository {
 
   async create(data: NewRestaurant) {
     const { latitude, longitude, ...rest } = data
+    const location = this.toLocationSql(latitude, longitude)
 
-    console.log({
-        ...rest,
-        location: latitude && longitude
-            ? sql`ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326)::GEOGRAPHY`
-            : null,
-        })
+    if (location === undefined) {
+      throw new Error("Location is required for restaurant creation");
+    }
 
     return db
         .insertInto('user_restaurants')
         .values({
         ...rest,
-        location: latitude && longitude
-            ? sql`ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326)::GEOGRAPHY`
-            : null,
+        location,
         })
         .returningAll()
         .executeTakeFirstOrThrow()
@@ -74,17 +78,16 @@ export class RestaurantRepository {
 
   async update(restaurantId: UUID, userId: UUID, data: ChangeRestaurant) {
     const { latitude, longitude, ...rest } = data
-    
-    let updateData: any = { ...rest, updated_at: new Date() }
+    const nextLocation = this.toLocationSql(latitude, longitude)
+    const updateData = {
+      ...rest,
+      updated_at: new Date(),
+      ...(nextLocation !== undefined ? { location: nextLocation } : {})
+    }
 
     return db
       .updateTable('user_restaurants')
-      .set({
-        ...updateData,
-        location: latitude && longitude
-            ? sql`ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326)::GEOGRAPHY`
-            : null,
-        })
+      .set(updateData)
       .where('user_restaurant_id', '=', restaurantId)
       .where('user_id', '=', userId)
       .returningAll()

@@ -1,7 +1,7 @@
 import { Router } from 'express'
-import { RestaurantController } from './restaurants.controller'
-import { RestaurantService } from './restaurants.service'
-import { RestaurantRepository } from './restaurants.repository'
+import { RestaurantController } from './restaurants.controller.js'
+import { RestaurantService } from './restaurants.service.js'
+import { RestaurantRepository } from './restaurants.repository.js'
 
 const router: Router = Router()
 

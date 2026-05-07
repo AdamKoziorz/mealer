@@ -1,15 +1,13 @@
 // Starts the server to be listened to
 
-import { app } from './app'
+import 'dotenv/config'
 
-import dotenv from 'dotenv';
-dotenv.config();
-
-const EXPRESS_PORT = process.env.EXPRESS_PORT || 6789
+import { app } from './app.js'
+import { env } from './config/env.js'
 
 try {
-    app.listen(EXPRESS_PORT, () => {
-        console.log(`Server running on port ${EXPRESS_PORT}`)
+    app.listen(env.expressPort, () => {
+        console.log(`Server running on port ${env.expressPort}`)
     })
 } catch (error) {
     console.error(`Failed to start server: ${error}`)

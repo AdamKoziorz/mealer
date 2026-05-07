@@ -1,15 +1,13 @@
-import { Insertable, Selectable, Updateable } from "kysely"
-import { OAuthAccountTable, SessionTable, UserRestaurantsTable, UsersTable } from "./tables"
+import type { Insertable, Selectable, Updateable } from "kysely"
+import type { OAuthAccountTable, SessionTable, UserRestaurantsTable, UsersTable } from "./tables.js"
 
 // Below contains general types that are used in the backend
-
-import { UUID } from "crypto";
 
 declare global {
   namespace Express {
     interface Request {
       user?: {
-        user_id: UUID;
+        user_id: string;
       };
     }
   }

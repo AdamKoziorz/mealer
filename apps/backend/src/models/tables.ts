@@ -1,17 +1,16 @@
-import { UUID } from "crypto"
-import { ColumnType, Generated } from "kysely"
-import { GeometryPoint } from "./types"
+import type { ColumnType, Generated } from "kysely"
+import type { GeometryPoint } from "./types.js"
 
 export interface UsersTable {
-  user_id:              Generated<UUID>                  
+  user_id:              Generated<string>                  
   email:                string
   created_at:           Generated<Date>
   updated_at:           Generated<Date>
 }
 
 export interface OAuthAccountTable {
-  oauth_account_id:     Generated<UUID>,
-    user_id: 		    UUID,
+  oauth_account_id:     Generated<string>,
+    user_id: 		        string,
     provider:           string,
     provider_user_id:   string,
     email:              string,
@@ -19,8 +18,8 @@ export interface OAuthAccountTable {
 }
 
 export interface UserRestaurantsTable {
-  user_restaurant_id:   Generated<UUID>
-  user_id:              UUID
+  user_restaurant_id:   Generated<string>
+  user_id:              string
   name:                 string
   address:              string | null
   location:             ColumnType<
@@ -38,8 +37,17 @@ export interface UserRestaurantsTable {
 }
 
 export interface SessionTable {
-  session_id:           Generated<UUID>
-  user_id:              UUID
-  created_at:           Generated<Date>
-  expires_at:           Date
+  session_row_id: Generated<string>
+  session_token_hash: string
+  user_id: string
+  created_at: Generated<Date>
+  last_used_at: Generated<Date>
+  expires_at: Date
+  revoked_at: Date | null
+}
+
+export interface PendingOAuthTable {
+  state:         string
+  code_verifier: string
+  expires_at:    Date
 }

@@ -1,5 +1,7 @@
+const SERVER_URL = import.meta.env.VITE_API_URL;
+
 export async function fetchMe() {
-  const res = await fetch("http://localhost:6789/user/", {
+  const res = await fetch(`${SERVER_URL}/user/`, {
     credentials: "include",
   });
 
@@ -9,7 +11,7 @@ export async function fetchMe() {
 
 export const logout = async () => {
   try {
-    const res = await fetch("http://localhost:6789/auth/logout", {
+    const res = await fetch(`${SERVER_URL}/auth/logout`, {
       method: "POST",
       credentials: "include", // Sends the session cookie
     });

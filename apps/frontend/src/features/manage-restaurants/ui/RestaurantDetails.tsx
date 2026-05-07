@@ -100,7 +100,10 @@ export const RestaurantDetails = () => {
                 onBlur={() => handleUpdate({ notes: note })}
                 value={note}
             />
-            <div aria-label="Button Container" className="flex flex-row justify-between !pt-12">
+            <div
+                aria-label="Button Container"
+                className="flex flex-row justify-between !pt-12 !pb-[calc(env(safe-area-inset-bottom)+3rem)] sm:!pb-0"
+            >
                 <Button variant={'default'} onClick={handleBackClick} className="w-1/4">Close</Button>
                 <Button variant={'secondary'} onClick={handleMoveClick} className="w-1/4">Move</Button>
                 <Button variant={'destructive'} onClick={handleDeleteClick} className="w-1/4">Delete</Button>

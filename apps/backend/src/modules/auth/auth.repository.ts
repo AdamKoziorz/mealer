@@ -1,6 +1,8 @@
-import { db } from "@/models/database";
-import { NewOAuthAccount, NewSession, NewUser } from "@/models/types";
-import { UUID } from "crypto";
+import { db } from "../../models/database.js";
+import type { NewOAuthAccount, NewUser } from "../../models/types.js";
+
+import { randomBase64Url, sha256Hex } from "./auth.utils.js"
+import { env } from "../../config/env.js";
 
 export class AuthRepository {
     async createUser(user_input: NewUser, provider_input: Omit<NewOAuthAccount, 'user_id'>) {
@@ -34,27 +36,81 @@ export class AuthRepository {
 };
 
 export class SessionRepository {
-  async createSession(input: NewSession) {
-    return db
+  async createSession(userId: string) {
+
+    const sessionToken = randomBase64Url(32);
+    const sessionTokenHash = sha256Hex(sessionToken);
+
+    await db
       .insertInto("sessions")
-      .values(input)
-      .returningAll()
+      .values({
+        user_id: userId,
+        session_token_hash: sessionTokenHash,
+        created_at: new Date(),
+        last_used_at: new Date(),
+        expires_at: new Date(Date.now() + env.sessionTtlMs),
+        revoked_at: null
+      })
       .executeTakeFirstOrThrow();
+
+    return { sessionToken };
   }
 
-  async findValidSession(sessionId: UUID) {
+  async findValidSession(sessionToken: string) {
+    const sessionTokenHash = sha256Hex(sessionToken);
+
     return db
       .selectFrom("sessions")
       .selectAll()
-      .where("session_id", "=", sessionId)
+      .where("session_token_hash", "=", sessionTokenHash)
       .where("expires_at", ">", new Date())
+      .where("revoked_at", "is", null)
       .executeTakeFirst();
   }
 
-  async deleteSession(session_id: UUID) {
-    return db
-      .deleteFrom('sessions')
-      .where('session_id', '=', session_id)
-      .execute();
+  async revokeSession(sessionToken: string) {
+    const sessionTokenHash = sha256Hex(sessionToken);
+
+    await db
+      .updateTable("sessions")
+      .set({ revoked_at: new Date() })
+      .where("session_token_hash", "=", sessionTokenHash)
+      .where("revoked_at", "is", null)
+      .executeTakeFirst();
+  }
+
+  async deleteSession(sessionToken: string) {
+    await this.revokeSession(sessionToken);
+  }
+
+  async touchSession(sessionToken: string) {
+    const sessionTokenHash = sha256Hex(sessionToken);
+
+    await db
+      .updateTable("sessions")
+      .set({ last_used_at: new Date() })
+      .where("session_token_hash", "=", sessionTokenHash)
+      .where("revoked_at", "is", null)
+      .executeTakeFirst();
   }
 };
+
+export class PendingOAuthRepository {
+  async storePendingAuth(stateHash: string, codeVerifier: string, expiresAt: Date): Promise<void> {
+    await db
+      .insertInto('pending_oauth')
+      .values({ state: stateHash, code_verifier: codeVerifier, expires_at: expiresAt })
+      .execute();
+  }
+
+  async consumePendingAuth(stateHash: string): Promise<string | undefined> {
+    const row = await db
+      .deleteFrom('pending_oauth')
+      .where('state', '=', stateHash)
+      .where('expires_at', '>', new Date())
+      .returning('code_verifier')
+      .executeTakeFirst();
+
+    return row?.code_verifier;
+  }
+}

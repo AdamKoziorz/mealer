@@ -1,65 +1,82 @@
-import { Request, Response } from 'express'
-import { RestaurantService } from './restaurants.service'
-import { UUID } from 'crypto'
+import type { NextFunction, Request, Response } from 'express'
+import { RestaurantService } from './restaurants.service.js'
+import type { UUID } from 'crypto'
+import { createRestaurantSchema, updateRestaurantSchema } from '@mealer/schemas/restaurant'
 
 export class RestaurantController {
   constructor(
     private restaurantService: RestaurantService
   ) {}
 
-  getUserRestaurants = async (req: Request, res: Response) => {
+  getUserRestaurants = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const restaurants = await this.restaurantService.getUserRestaurants(req.user!.user_id)
+      const userId = req.user!.user_id as UUID
+      const restaurants = await this.restaurantService.getUserRestaurants(userId)
       res.status(200).json(Array.isArray(restaurants) ? restaurants : [])
     } catch (error) {
-      res.status(400).json({ error: (error as Error).message })
+      next(error)
     }
   }
 
-  getRestaurant = async (req: Request, res: Response) => {
+  getRestaurant = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { restaurantId } = req.params as { restaurantId: UUID }
+      const { restaurantId } = req.params as { restaurantId: string }
+      const userId = req.user!.user_id as UUID
       const restaurant = await this.restaurantService.getRestaurantById(
-        restaurantId,
-        req.user!.user_id
+        restaurantId as UUID,
+        userId
       )
       res.json(restaurant)
     } catch (error) {
-      res.status(404).json({ error: (error as Error).message })
+      next(error)
     }
   }
 
-  createRestaurant = async (req: Request, res: Response) => {
+  createRestaurant = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const data = { ...req.body, user_id: req.user!.user_id }
-      const restaurant = await this.restaurantService.createRestaurant(data)
+      const parsed = createRestaurantSchema.safeParse(req.body)
+      if (!parsed.success) {
+        res.status(400).json({ error: 'Invalid input', details: parsed.error.flatten() })
+        return
+      }
+      const restaurant = await this.restaurantService.createRestaurant({
+        ...parsed.data,
+        user_id: req.user!.user_id
+      })
       res.status(201).json(restaurant)
     } catch (error) {
-      res.status(400).json({ error: (error as Error).message })
+      next(error)
     }
   }
 
-  updateRestaurant = async (req: Request, res: Response) => {
+  updateRestaurant = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { restaurantId } = req.params as { restaurantId: UUID }
+      const { restaurantId } = req.params as { restaurantId: string }
+      const userId = req.user!.user_id as UUID
+      const parsed = updateRestaurantSchema.safeParse(req.body)
+      if (!parsed.success) {
+        res.status(400).json({ error: 'Invalid input', details: parsed.error.flatten() })
+        return
+      }
       const restaurant = await this.restaurantService.updateRestaurant(
-        restaurantId,
-        req.user!.user_id,
-        req.body
+        restaurantId as UUID,
+        userId,
+        parsed.data
       )
       res.json(restaurant)
     } catch (error) {
-      res.status(400).json({ error: (error as Error).message })
+      next(error)
     }
   }
 
-  deleteRestaurant = async (req: Request, res: Response) => {
+  deleteRestaurant = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { restaurantId } = req.params as { restaurantId: UUID }
-      await this.restaurantService.deleteRestaurant(restaurantId, req.user!.user_id)
+      const { restaurantId } = req.params as { restaurantId: string }
+      const userId = req.user!.user_id as UUID
+      await this.restaurantService.deleteRestaurant(restaurantId as UUID, userId)
       res.status(204).send()
     } catch (error) {
-      res.status(400).json({ error: (error as Error).message })
+      next(error)
     }
   }
 }

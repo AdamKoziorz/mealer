@@ -1,0 +1,16 @@
+{
+  "private": true,
+  "packageManager": "pnpm@10.14.0",
+  "pnpm": {
+    "overrides": {
+      "ip-address": "^10.1.1",
+      "postcss": "^8.5.10",
+      "protocol-buffers-schema": "^3.6.1",
+      "yaml": "^1.10.3"
+    },
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "unrs-resolver"
+    ]
+  }
+}
