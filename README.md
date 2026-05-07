@@ -13,9 +13,8 @@
 ## Tech Stack
 
 - **Frontend**: React, TypeScript, Tailwind, Vite
-- **Backend**: Express, PostgreSQL, Prisma
-- **Authentication**: Passport.js
-- **Testing**: Playwright
+- **Backend**: Express, PostgreSQL, Kysely
+- **Authentication**: Google OAuth Library
 
 ## Contributing
 

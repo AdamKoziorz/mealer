@@ -48,9 +48,7 @@ export const RestaurantDashboard = () => {
           </div>
         ) : null}
         <p className="!mt-2">
-          My name is Adam Koziorz, and I built this web app with a goal to help
-          foodies track their restaurants better. What are you waiting for? Sign
-          in now to start tracking!
+          A recommender app for foodies who mainly trust their own taste.
         </p>
         <p className="!mt-2">
           Note that only Google OAuth is supported at this time.
@@ -68,7 +66,7 @@ export const RestaurantDashboard = () => {
           <Button
             onClick={() => {
               window.open(
-                'https://adamkoziorz.github.io',
+                'https://adamkoziorz.github.io/blog/side-project-mealer',
                 '_blank',
                 'noopener,noreferrer'
               );
@@ -76,7 +74,7 @@ export const RestaurantDashboard = () => {
             variant={'default'}
             className="!px-4"
           >
-            View my Personal Site!
+            Read more on my Blog!
           </Button>
         </div>
       </div>
