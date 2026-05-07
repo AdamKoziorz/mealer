@@ -1,0 +1,17 @@
+{
+  "name": "@mealer/schemas",
+  "version": "1.0.0",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    "./restaurant": {
+      "types": "./dist/restaurant.d.ts",
+      "import": "./dist/restaurant.js"
+    }
+  },
+  "peerDependencies": {
+    "zod": "^4.0.0"
+  }
+}

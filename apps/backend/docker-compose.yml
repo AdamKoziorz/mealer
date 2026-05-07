@@ -1,0 +1,22 @@
+services:
+  db:
+    build:
+      context: ../..
+      dockerfile: infrastructure/docker/db.Dockerfile
+    container_name: mealer-db
+    ports:
+      - '127.0.0.1:5432:5432'
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    command: >
+      postgres
+      -c shared_preload_libraries=pg_cron
+      -c cron.database_name=${POSTGRES_DB}
+    volumes:
+      - my_pgdata:/var/lib/postgresql/data
+      - ./src/models/init.sql:/docker-entrypoint-initdb.d/01_init.sql
+
+volumes:
+  my_pgdata:

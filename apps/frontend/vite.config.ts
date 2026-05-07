@@ -1,8 +1,8 @@
-import { defineConfig } from 'vite'
-import path from 'path'
-import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
-import tanstackRouterVite from '@tanstack/router-plugin/vite'
+import { defineConfig } from 'vite';
+import path from 'path';
+import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
+import tanstackRouterVite from '@tanstack/router-plugin/vite';
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -12,9 +12,10 @@ export default defineConfig({
       autoCodeSplitting: true,
       routesDirectory: './src/pages',
       generatedRouteTree: './src/app/routeTree.gen.ts',
+      routeFileIgnorePattern: '(^|/)hooks\\.ts$',
     }),
     react(),
-    tailwindcss()
+    tailwindcss(),
   ],
   resolve: {
     alias: {
@@ -24,7 +25,7 @@ export default defineConfig({
       '@widgets': path.resolve(__dirname, './src/widgets'),
       '@features': path.resolve(__dirname, './src/features'),
       '@entities': path.resolve(__dirname, './src/entities'),
-      '@shared': path.resolve(__dirname, './src/shared')
-    }
-  }
-})
+      '@shared': path.resolve(__dirname, './src/shared'),
+    },
+  },
+});

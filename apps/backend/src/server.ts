@@ -1,12 +1,15 @@
-import express from 'express';
+// Starts the server to be listened to
 
-const app = express();
-const port = 3000;
+import 'dotenv/config';
 
-app.get('/health', (req, res) => {
-    res.status(200).send('Ok');
-})
+import { app } from './app.js';
+import { env } from './config/env.js';
 
-app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
-})
+try {
+  app.listen(env.expressPort, () => {
+    console.log(`Server running on port ${env.expressPort}`);
+  });
+} catch (error) {
+  console.error(`Failed to start server: ${error}`);
+  process.exit(1);
+}
