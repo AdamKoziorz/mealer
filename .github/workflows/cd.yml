@@ -1,0 +1,134 @@
+name: CD
+
+on:
+  release:
+    types:
+      - published
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Release tag to deploy (ex. v0.1.1)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  build:
+    name: Build and publish images
+    runs-on: ubuntu-latest
+    outputs:
+      app_version: ${{ steps.version.outputs.app_version }}
+      ghcr_owner: ${{ steps.owner.outputs.ghcr_owner }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.event.release.tag_name }}
+
+      - name: Resolve release version
+        id: version
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "app_version=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "app_version=${{ github.event.release.tag_name }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Resolve lowercase GHCR owner
+        id: owner
+        shell: bash
+        run: |
+          echo "ghcr_owner=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: infrastructure/docker/backend.Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ steps.owner.outputs.ghcr_owner }}/mealer-backend:${{ steps.version.outputs.app_version }}
+            ${{ env.REGISTRY }}/${{ steps.owner.outputs.ghcr_owner }}/mealer-backend:latest
+
+      - name: Build and push frontend/nginx image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: infrastructure/docker/frontend.Dockerfile
+          push: true
+          build-args: |
+            VITE_API_URL=${{ vars.VITE_API_URL }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ steps.owner.outputs.ghcr_owner }}/mealer-nginx:${{ steps.version.outputs.app_version }}
+            ${{ env.REGISTRY }}/${{ steps.owner.outputs.ghcr_owner }}/mealer-nginx:latest
+
+  deploy:
+    name: Deploy to production
+    needs:
+      - build
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.2.5
+        env:
+          APP_VERSION: ${{ needs.build.outputs.app_version }}
+          GHCR_OWNER: ${{ needs.build.outputs.ghcr_owner }}
+          GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
+          GHCR_READ_TOKEN: ${{ secrets.GHCR_READ_TOKEN }}
+          PROD_APP_DIR: ${{ secrets.PROD_APP_DIR }}
+          PRODUCTION_URL: ${{ vars.PRODUCTION_URL }}
+        with:
+          host: ${{ secrets.DROPLET_HOST }}
+          username: ${{ secrets.DROPLET_USER }}
+          key: ${{ secrets.DROPLET_SSH_KEY }}
+          port: ${{ secrets.DROPLET_PORT }}
+          envs: APP_VERSION,GHCR_OWNER,GHCR_USERNAME,GHCR_READ_TOKEN,PROD_APP_DIR,PRODUCTION_URL
+          script: |
+            set -euo pipefail
+
+            cd "$PROD_APP_DIR"
+
+            git fetch --tags origin
+            git checkout --force "$APP_VERSION"
+
+            echo "$GHCR_READ_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
+
+            export APP_VERSION
+            export GHCR_OWNER
+
+            docker compose --env-file .env.production -f docker-compose.prod.yml -f docker-compose.ghcr.yml pull backend nginx
+            docker compose --env-file .env.production -f docker-compose.prod.yml -f docker-compose.ghcr.yml up -d --no-build backend nginx
+            docker image prune -f
+
+            for attempt in {1..10}; do
+              if curl -fsS "$PRODUCTION_URL" >/dev/null; then
+                echo "Healthcheck passed"
+                exit 0
+              fi
+
+              echo "Healthcheck failed, retrying in 3 seconds... ($attempt/10)"
+              sleep 3
+            done
+
+            echo "Healthcheck failed after 10 attempts"
+            exit 1
