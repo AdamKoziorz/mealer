@@ -11,9 +11,12 @@ on:
         required: true
         type: string
 
+concurrency:
+  group: cd-production
+  cancel-in-progress: false
+
 permissions:
   contents: read
-  packages: write
 
 env:
   REGISTRY: ghcr.io
@@ -22,6 +25,11 @@ jobs:
   build:
     name: Build and publish images
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
     outputs:
       app_version: ${{ steps.version.outputs.app_version }}
       ghcr_owner: ${{ steps.owner.outputs.ghcr_owner }}
@@ -67,6 +75,8 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/${{ steps.owner.outputs.ghcr_owner }}/mealer-backend:${{ steps.version.outputs.app_version }}
             ${{ env.REGISTRY }}/${{ steps.owner.outputs.ghcr_owner }}/mealer-backend:latest
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
 
       - name: Build and push frontend/nginx image
         uses: docker/build-push-action@v7
@@ -79,6 +89,8 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/${{ steps.owner.outputs.ghcr_owner }}/mealer-nginx:${{ steps.version.outputs.app_version }}
             ${{ env.REGISTRY }}/${{ steps.owner.outputs.ghcr_owner }}/mealer-nginx:latest
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend
 
   deploy:
     name: Deploy to production
@@ -86,6 +98,9 @@ jobs:
       - build
     runs-on: ubuntu-latest
     environment: production
+
+    permissions:
+      contents: read
 
     steps:
       - name: Deploy over SSH
@@ -108,6 +123,12 @@ jobs:
 
             cd "$PROD_APP_DIR"
 
+            # Save the previously deployed version in case of rollback
+            PREVIOUS_APP_VERSION=""
+            if [ -f .mealer-current-version ]; then
+              PREVIOUS_APP_VERSION="$(cat .mealer-current-version)"
+            fi
+
             git fetch --tags origin
             git checkout --force "$APP_VERSION"
 
@@ -118,17 +139,31 @@ jobs:
 
             docker compose --env-file .env.production -f docker-compose.prod.yml -f docker-compose.ghcr.yml pull backend nginx
             docker compose --env-file .env.production -f docker-compose.prod.yml -f docker-compose.ghcr.yml up -d --no-build backend nginx
-            docker image prune -f
 
-            for attempt in {1..10}; do
+            for attempt in {1..5}; do
               if curl -fsS "$PRODUCTION_URL" >/dev/null; then
                 echo "Healthcheck passed"
+                echo "$APP_VERSION" > .mealer-current-version
+                docker image prune -f
                 exit 0
               fi
-
               echo "Healthcheck failed, retrying in 3 seconds... ($attempt/10)"
               sleep 3
             done
 
-            echo "Healthcheck failed after 10 attempts"
+            # Healthcheck failed — attempt rollback
+            echo "Healthcheck failed after 5 attempts"
+
+            if [ -n "$PREVIOUS_APP_VERSION" ]; then
+              echo "Rolling back to $PREVIOUS_APP_VERSION..."
+              export APP_VERSION="$PREVIOUS_APP_VERSION"
+              git checkout --force "$PREVIOUS_APP_VERSION"
+              docker compose --env-file .env.production -f docker-compose.prod.yml -f docker-compose.ghcr.yml up -d --no-build backend nginx
+              echo "Rollback to $PREVIOUS_APP_VERSION complete. Images from failed deploy NOT pruned."
+            else
+              echo "No previous version found — manual intervention required."
+            fi
+
+            # Always exit 1 so GitHub marks the run as failed,
+            # even if rollback succeeded
             exit 1

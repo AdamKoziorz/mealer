@@ -11,7 +11,7 @@ RUN pnpm install --filter mealer-backend... --frozen-lockfile
 COPY apps/backend apps/backend
 COPY packages/schemas packages/schemas
 
-RUN node apps/backend/node_modules/typescript/bin/tsc -p packages/schemas/tsconfig.json
+RUN pnpm --filter @mealer/schemas build
 RUN pnpm --filter mealer-backend build
 
 FROM node:22-alpine
