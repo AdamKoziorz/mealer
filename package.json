@@ -1,5 +1,6 @@
 {
   "private": true,
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "lint": "eslint apps/frontend/src apps/backend/src packages/schemas --max-warnings=0",
