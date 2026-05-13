@@ -123,8 +123,8 @@ export const RestaurantMap = ({
     const mapInstance = new maplibregl.Map({
       container: mapContainer.current,
       style: 'https://tiles.openfreemap.org/styles/bright',
-      center: [-78.83, 43.9],
-      zoom: 9.5,
+      center: [-79.38, 43.65],
+      zoom: 12,
       attributionControl: false,
     });
 
