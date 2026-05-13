@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.2](https://github.com/AdamKoziorz/mealer/compare/mealer-v0.1.1...mealer-v0.1.2) (2026-05-13)
+
+
+### Bug Fixes
+
+* harden ci/cd workflow ([927e762](https://github.com/AdamKoziorz/mealer/commit/927e762a702d734905a3743f17d2bc0d4339c381))
+* harden ci/cd workflow ([c8658bf](https://github.com/AdamKoziorz/mealer/commit/c8658bffd64957182a5ff4cac1e43df14b875436))
+
 ## [0.1.1](https://github.com/AdamKoziorz/mealer/compare/mealer-v0.1.0...mealer-v0.1.1) (2026-05-13)
 
 
