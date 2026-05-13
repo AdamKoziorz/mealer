@@ -1,9 +1,9 @@
 name: CD
 
 on:
-  release:
-    types:
-      - published
+  push:
+    tags:
+      - 'v*'
   workflow_dispatch:
     inputs:
       version:
@@ -35,11 +35,6 @@ jobs:
       ghcr_owner: ${{ steps.owner.outputs.ghcr_owner }}
 
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.event.release.tag_name }}
-
       - name: Resolve release version
         id: version
         shell: bash
@@ -47,8 +42,26 @@ jobs:
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             echo "app_version=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
           else
-            echo "app_version=${{ github.event.release.tag_name }}" >> "$GITHUB_OUTPUT"
+            echo "app_version=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.version.outputs.app_version }}
+          fetch-depth: 0
+
+      - name: Verify tag is on main
+        shell: bash
+        run: |
+          TAG="${{ steps.version.outputs.app_version }}"
+          git fetch origin main
+          TAG_SHA="$(git rev-parse "$TAG^{commit}")"
+          if ! git merge-base --is-ancestor "$TAG_SHA" origin/main; then
+            echo "Tag $TAG ($TAG_SHA) is not an ancestor of origin/main — refusing to deploy."
+            exit 1
+          fi
+          echo "Tag $TAG verified on main."
 
       - name: Resolve lowercase GHCR owner
         id: owner
