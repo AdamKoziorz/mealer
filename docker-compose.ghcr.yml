@@ -1,0 +1,6 @@
+services:
+  backend:
+    image: ghcr.io/${GHCR_OWNER}/mealer-backend:${APP_VERSION}
+
+  nginx:
+    image: ghcr.io/${GHCR_OWNER}/mealer-nginx:${APP_VERSION}

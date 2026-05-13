@@ -2,6 +2,9 @@
   "name": "@mealer/schemas",
   "version": "1.0.0",
   "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
   "files": [
     "dist"
   ],
@@ -13,5 +16,8 @@
   },
   "dependencies": {
     "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "typescript": "~5.9.3"
   }
 }
