@@ -78,7 +78,7 @@ export const RestaurantDetails = () => {
 
   return (
     <div className="text-black p-16 flex flex-col gap-1">
-      <h1 className="text-4xl font-semibold !mb-6 !text-ellipsis !break-words !line-clamp-3">
+      <h1 className="text-4xl font-semibold !mb-6 !break-words">
         {selectedRestaurant?.name}
       </h1>
       <StarRating />

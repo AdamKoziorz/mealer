@@ -173,7 +173,7 @@ const HomePage = () => {
       </section>
       <section
         aria-label="Restaurant Dashboard"
-        className="pointer-events-none fixed inset-x-0 bottom-0 z-10 px-3 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] text-black sm:absolute sm:inset-auto sm:top-4 sm:left-4 sm:w-96 sm:px-0 sm:pb-0"
+        className="pointer-events-none fixed inset-x-0 bottom-0 z-10 px-3 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] text-black sm:absolute sm:inset-auto sm:top-4 sm:left-4 sm:bottom-4 sm:w-96 sm:px-0 sm:pb-0"
       >
         <div className="sm:hidden">
           <div
@@ -206,13 +206,17 @@ const HomePage = () => {
             </button>
             <div
               id="restaurant-dashboard-panel"
-              className="min-h-0 flex-1 overflow-y-auto"
+              className={`min-h-0 flex-1 overflow-y-auto ${
+                drawerOpen
+                  ? 'opacity-100 transition-opacity duration-150'
+                  : 'opacity-0 transition-none'
+              }`}
             >
               <RestaurantDashboard />
             </div>
           </div>
         </div>
-        <div className="pointer-events-auto hidden sm:block">
+        <div className="pointer-events-auto hidden sm:block sm:h-full">
           <RestaurantDashboard />
         </div>
       </section>

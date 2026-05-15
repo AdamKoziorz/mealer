@@ -39,7 +39,7 @@ export const RestaurantDashboard = () => {
 
   if (!user) {
     return (
-      <div className="!p-4 !pb-[calc(env(safe-area-inset-bottom)+1rem)] !bg-red-50 sm:!m-4 sm:!rounded-xl sm:!border-2 sm:!p-12">
+      <div className="!p-4 !pb-[calc(env(safe-area-inset-bottom)+1rem)] !bg-red-50 sm:!max-h-full sm:!overflow-y-auto sm:!rounded-xl sm:!border-2 sm:!p-12">
         <h1 className="mb-4 text-3xl font-semibold">Welcome to Mealer!</h1>
         {authError === 'auth_failed' ? (
           <div className="!mb-4 !rounded-lg !border !border-red-300 !bg-white !p-3 text-sm text-red-700">
@@ -124,7 +124,7 @@ export const RestaurantDashboard = () => {
   };
 
   return (
-    <div className="!bg-red-50 !p-4 !pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:!m-4 sm:!rounded-xl sm:!border-2 sm:!p-12">
+    <div className="!bg-red-50 !p-4 !pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:!max-h-full sm:!overflow-y-auto sm:!rounded-xl sm:!border-2 sm:!p-12">
       {renderDashboard()}
     </div>
   );
