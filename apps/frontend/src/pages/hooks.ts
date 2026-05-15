@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 
 import { useRMStore } from '@features/manage-restaurants/hooks';
@@ -15,24 +15,28 @@ export const useMobileRestaurantSheetSync = ({
   setDragOffset,
 }: UseMobileRestaurantSheetSyncArgs) => {
   const context = useRMStore((s) => s.context);
+  const prevContextRef = useRef(context);
 
-  useEffect(() => {
-    if (!isMobile) return;
+  useLayoutEffect(() => {
+    if (!isMobile) {
+      prevContextRef.current = context;
+      return;
+    }
 
-    // The drawer is page-local UI state, so the page reacts to feature context.
+    const prev = prevContextRef.current;
+    prevContextRef.current = context;
+
+    // Skip the mount tick so the initial drawerOpen={true} is preserved.
+    if (prev === context) return;
+
     if (context === 'rm/select-restaurant') {
       setDrawerOpen(true);
       setDragOffset(null);
       return;
     }
 
-    // The map does not own the sheet; add and move flows simply free map space.
-    if (
-      context === 'rm/click-empty-to-add' ||
-      context === 'rm/moving-restaurant'
-    ) {
-      setDrawerOpen(false);
-      setDragOffset(null);
-    }
+    // Add, move, and idle-after-flow all want the map back.
+    setDrawerOpen(false);
+    setDragOffset(null);
   }, [context, isMobile, setDrawerOpen, setDragOffset]);
 };
