@@ -28,4 +28,8 @@ https://adamkoziorz.github.io/blog/side-project-mealer/
 
 ## Contributing
 
-This is a solo project at the moment, but please feel free to make a Discussion post if you want to give some input!
+I will not be contributing to this project for a little while as I work on another side project of mine, Drift.
+
+That being said, I am happy to collaborate with others that would like to extend Mealer by setting up database migrations, implementing a frequency tracker, adding filtering/categorization, and making UI/UX improvements. Simply start up a discussion if you're interested!
+
+Other features such as a chatbot, recommender system, and geospatial querying I hope to do individually.
