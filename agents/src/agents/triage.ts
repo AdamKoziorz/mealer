@@ -1,4 +1,4 @@
-import { anthropic } from '../lib/claude.js';
+import { anthropic, extractText } from '../lib/claude.js';
 import { getIssue, postIssueComment } from '../lib/github.js';
 import { parseJsonObject, setGitHubOutput } from '../lib/runtime.js';
 
@@ -50,12 +50,7 @@ Accept if:
     ],
   });
 
-  const text = response.content
-    .filter((b): b is { type: 'text'; text: string } => b.type === 'text')
-    .map((b) => b.text)
-    .join('');
-
-  const result = parseJsonObject<TriageResult>(text);
+  const result = parseJsonObject<TriageResult>(extractText(response.content));
 
   setGitHubOutput('decision', result.decision);
   setGitHubOutput('complexity', result.complexity);

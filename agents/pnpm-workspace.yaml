@@ -1,0 +1,6 @@
+# Makes `agents/` its own pnpm workspace root, isolated from the app workspace
+# at the repository root. Without this file, `pnpm install` run inside this
+# directory walks up to the root pnpm-workspace.yaml, which does not list
+# `agents` as a member, so these devDependencies (tsx, typescript) are never
+# installed — causing "Command tsx not found" in CI.
+packages: []

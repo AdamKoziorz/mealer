@@ -1,9 +1,12 @@
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 
 const WORKSPACE = process.env.GITHUB_WORKSPACE ?? process.cwd();
 
-function exec(command: string): string {
-  return execSync(command, {
+// execFileSync (shell: false) passes each argument literally, so untrusted
+// values — e.g. an LLM-generated commit message containing quotes, backticks,
+// or $(...) — cannot break argument parsing or inject shell commands.
+function git(...args: string[]): string {
+  return execFileSync('git', args, {
     cwd: WORKSPACE,
     encoding: 'utf-8',
     stdio: ['pipe', 'pipe', 'pipe'],
@@ -11,14 +14,15 @@ function exec(command: string): string {
 }
 
 export function createBranch(name: string): void {
-  exec(`git checkout -b ${name}`);
+  // -B resets the branch if a previous run already created it locally.
+  git('checkout', '-B', name);
 }
 
 export function commitAll(message: string): void {
-  exec('git add -A');
-  exec(`git commit -m ${JSON.stringify(message)}`);
+  git('add', '-A');
+  git('commit', '-m', message);
 }
 
 export function pushBranch(branch: string): void {
-  exec(`git push origin ${branch}`);
+  git('push', 'origin', branch);
 }

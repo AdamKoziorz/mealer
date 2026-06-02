@@ -12,6 +12,14 @@ export type Tool = {
   handler: (input: Record<string, unknown>) => Promise<string>;
 };
 
+/** Concatenate the text blocks of a model response, ignoring tool_use/other blocks. */
+export function extractText(content: Anthropic.ContentBlock[]): string {
+  return content
+    .filter((b): b is Anthropic.TextBlock => b.type === 'text')
+    .map((b) => b.text)
+    .join('\n');
+}
+
 export async function runAgentLoop(params: {
   model: string;
   system: string;
@@ -42,10 +50,7 @@ export async function runAgentLoop(params: {
     messages.push({ role: 'assistant', content: response.content });
 
     if (response.stop_reason === 'end_turn') {
-      return response.content
-        .filter((b): b is Anthropic.TextBlock => b.type === 'text')
-        .map((b) => b.text)
-        .join('\n');
+      return extractText(response.content);
     }
 
     if (response.stop_reason === 'tool_use') {
@@ -79,7 +84,15 @@ export async function runAgentLoop(params: {
       }
 
       messages.push({ role: 'user', content: toolResults });
+      continue;
     }
+
+    // Any other stop_reason (most commonly 'max_tokens') leaves a trailing
+    // assistant turn the loop cannot answer — fail loudly instead of spinning.
+    throw new Error(
+      `Agent loop stopped unexpectedly (stop_reason=${response.stop_reason}). ` +
+        `If this is 'max_tokens', raise maxTokens for this agent.`
+    );
   }
 
   throw new Error(`Agent loop reached ${maxIterations} iterations without finishing`);

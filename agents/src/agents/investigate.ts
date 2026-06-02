@@ -133,9 +133,13 @@ When you have identified the root cause, write your final output as a GitHub com
 <minimal unified diff>
 \`\`\`
 
-**Verification command**:
+**Verification command** — must be exactly one of these (other scripts do not exist and will be rejected):
+- \`pnpm lint\` — root ESLint over frontend/backend/schemas source (use for most fixes)
+- \`pnpm --dir apps/frontend build\` — typecheck + Vite build of the frontend
+- \`pnpm --dir apps/backend build\` — \`tsc\` build of the backend
+- \`pnpm --dir packages/schemas build\` — \`tsc\` build of the shared schemas
 \`\`\`
-<single lint, typecheck, test, or build command>
+<one command copied verbatim from the list above>
 \`\`\`
 
 **Why this fix and not the obvious alternatives**: <one concise paragraph>
