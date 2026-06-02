@@ -25,10 +25,10 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-          cache-dependency-path: agents/package.json
+          cache-dependency-path: agents/pnpm-lock.yaml
 
       - name: Install agent dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
         working-directory: agents
 
       - name: Evaluate gate

@@ -1,4 +1,4 @@
-import { anthropic } from '../lib/claude.js';
+import { anthropic, extractText } from '../lib/claude.js';
 import { getPRDiff, postPRComment } from '../lib/github.js';
 import { parseJsonObject, truncate } from '../lib/runtime.js';
 
@@ -44,12 +44,7 @@ Questions to avoid:
     ],
   });
 
-  const text = response.content
-    .filter((b): b is { type: 'text'; text: string } => b.type === 'text')
-    .map((b) => b.text)
-    .join('');
-
-  const result = parseJsonObject<GateGeneration>(text);
+  const result = parseJsonObject<GateGeneration>(extractText(response.content));
   const encodedRubric = Buffer.from(result.evaluator_rubric, 'utf-8').toString('base64url');
   const body = `${GATE_MARKER}\n\n${result.public_gate.trim()}\n\n${GATE_RUBRIC_MARKER}:${encodedRubric} -->\n\n---\nReply with \`/gate-answer\` followed by your answers. An evaluation agent will assess them and mark this PR ready for review, or ask a follow-up if something is missing.`;
 

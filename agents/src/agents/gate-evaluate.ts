@@ -1,4 +1,4 @@
-import { anthropic } from '../lib/claude.js';
+import { anthropic, extractText } from '../lib/claude.js';
 import { getPRComments, getPR, getPRDiff, postPRComment, markPRReady } from '../lib/github.js';
 import { parseJsonObject, truncate } from '../lib/runtime.js';
 import { GATE_MARKER, GATE_RUBRIC_MARKER } from './gate-generate.js';
@@ -91,12 +91,7 @@ Evaluation standard:
     ],
   });
 
-  const text = response.content
-    .filter((b): b is { type: 'text'; text: string } => b.type === 'text')
-    .map((b) => b.text)
-    .join('');
-
-  const evaluation = parseJsonObject<GateEvaluation>(text);
+  const evaluation = parseJsonObject<GateEvaluation>(extractText(response.content));
   const resultLines = evaluation.question_results
     .map((result) => `- ${result.passed ? 'Pass' : 'Not yet'}: ${result.question} - ${result.explanation}`)
     .join('\n');
