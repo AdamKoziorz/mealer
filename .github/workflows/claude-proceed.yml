@@ -1,0 +1,70 @@
+name: Claude — Implement & Gate
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  implement-and-gate:
+    # Only fires when the repo owner comments /proceed on a claude-labeled issue (not a PR)
+    if: |
+      github.event.comment.body == '/proceed' &&
+      github.event.comment.user.login == 'AdamKoziorz' &&
+      github.event.issue.pull_request == null &&
+      contains(github.event.issue.labels.*.name, 'claude')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          # A PAT is required so that the pushed branch can trigger subsequent workflow runs.
+          # Create a fine-grained PAT with contents:write and pull-requests:write, then add it
+          # as a repository secret named CLAUDE_PAT.
+          token: ${{ secrets.CLAUDE_PAT }}
+
+      - name: Configure git identity
+        run: |
+          git config user.name "claude-bot"
+          git config user.email "claude-bot@users.noreply.github.com"
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: agents/package.json
+
+      - name: Install workspace dependencies
+        run: pnpm install
+
+      - name: Install agent dependencies
+        run: pnpm install
+        working-directory: agents
+
+      - name: Implement
+        id: implement
+        run: |
+          OUTPUT=$(pnpm tsx src/index.ts implement ${{ github.event.issue.number }} 2>&1)
+          echo "$OUTPUT"
+          PR_NUMBER=$(echo "$OUTPUT" | grep "^PR_NUMBER=" | cut -d= -f2)
+          echo "pr_number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
+        working-directory: agents
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.CLAUDE_PAT }}
+          GITHUB_WORKSPACE: ${{ github.workspace }}
+
+      - name: Generate comprehension gate
+        run: pnpm tsx src/index.ts gate-generate ${{ steps.implement.outputs.pr_number }}
+        working-directory: agents
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

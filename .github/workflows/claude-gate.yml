@@ -1,0 +1,42 @@
+name: Claude — Evaluate Gate
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  evaluate-gate:
+    # Fires when the repo owner answers the comprehension gate on a PR.
+    if: |
+      github.event.comment.user.login == 'AdamKoziorz' &&
+      github.event.issue.pull_request != null &&
+      startsWith(github.event.comment.body, '/gate-answer')
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: agents/package.json
+
+      - name: Install agent dependencies
+        run: pnpm install
+        working-directory: agents
+
+      - name: Evaluate gate
+        # github.event.issue.number is the PR number when the event is on a PR
+        run: pnpm tsx src/index.ts gate-evaluate ${{ github.event.issue.number }}
+        working-directory: agents
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
