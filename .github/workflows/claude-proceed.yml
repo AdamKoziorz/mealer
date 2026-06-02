@@ -50,7 +50,7 @@ jobs:
       - name: Implement
         id: implement
         run: |
-          OUTPUT=$(pnpm tsx src/index.ts implement ${{ github.event.issue.number }} 2>&1)
+          OUTPUT=$(pnpm exec tsx src/index.ts implement ${{ github.event.issue.number }} 2>&1)
           echo "$OUTPUT"
           PR_NUMBER=$(echo "$OUTPUT" | grep "^PR_NUMBER=" | cut -d= -f2)
           echo "pr_number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
@@ -61,7 +61,7 @@ jobs:
           GITHUB_WORKSPACE: ${{ github.workspace }}
 
       - name: Generate comprehension gate
-        run: pnpm tsx src/index.ts gate-generate ${{ steps.implement.outputs.pr_number }}
+        run: pnpm exec tsx src/index.ts gate-generate ${{ steps.implement.outputs.pr_number }}
         working-directory: agents
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}

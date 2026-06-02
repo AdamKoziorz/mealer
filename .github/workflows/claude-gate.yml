@@ -33,7 +33,7 @@ jobs:
 
       - name: Evaluate gate
         # github.event.issue.number is the PR number when the event is on a PR
-        run: pnpm tsx src/index.ts gate-evaluate ${{ github.event.issue.number }}
+        run: pnpm exec tsx src/index.ts gate-evaluate ${{ github.event.issue.number }}
         working-directory: agents
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
