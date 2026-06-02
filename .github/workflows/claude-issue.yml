@@ -29,7 +29,7 @@ jobs:
 
       - name: Triage
         id: triage
-        run: pnpm tsx src/index.ts triage ${{ github.event.issue.number }}
+        run: pnpm exec tsx src/index.ts triage ${{ github.event.issue.number }}
         working-directory: agents
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -37,7 +37,7 @@ jobs:
 
       - name: Investigate
         if: steps.triage.outputs.decision == 'accept'
-        run: pnpm tsx src/index.ts investigate ${{ github.event.issue.number }}
+        run: pnpm exec tsx src/index.ts investigate ${{ github.event.issue.number }}
         working-directory: agents
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
