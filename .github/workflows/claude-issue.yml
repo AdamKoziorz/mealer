@@ -1,0 +1,47 @@
+name: Claude — Triage & Investigate
+
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  triage-and-investigate:
+    if: github.event.label.name == 'claude'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: agents/package.json
+
+      - name: Install agent dependencies
+        run: pnpm install
+        working-directory: agents
+
+      - name: Triage
+        id: triage
+        run: pnpm tsx src/index.ts triage ${{ github.event.issue.number }}
+        working-directory: agents
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Investigate
+        if: steps.triage.outputs.decision == 'accept'
+        run: pnpm tsx src/index.ts investigate ${{ github.event.issue.number }}
+        working-directory: agents
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_WORKSPACE: ${{ github.workspace }}
