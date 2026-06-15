@@ -32,7 +32,7 @@ export const RestaurantDashboard = () => {
   if (authLoading) {
     return (
       <div className="!p-4 !pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:!p-12">
-        Checking session...
+        <span className="sr-only">Checking session...</span>
       </div>
     );
   }
