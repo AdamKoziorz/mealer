@@ -31,8 +31,10 @@ export const RestaurantDashboard = () => {
 
   if (authLoading) {
     return (
-      <div className="!p-4 !pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:!p-12">
-        Checking session...
+      <div className="flex min-h-24 items-center justify-center !p-4 !pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:min-h-full sm:!p-12">
+        <span className="text-sm text-gray-600" aria-live="polite">
+          Checking session...
+        </span>
       </div>
     );
   }
